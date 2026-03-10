@@ -1,0 +1,23 @@
+{
+  "filter_stats": {
+    "initial_count": 30056,
+    "after_drop_na": 30056,
+    "after_type_filter": 30056,
+    "after_range_filter": 30056,
+    "invalid_smiles_count": 0,
+    "after_smiles_validation": 30056
+  },
+  "dedup_stats": {
+    "before_dedup": 30056,
+    "duplicate_groups": 0,
+    "after_dedup": 30056
+  },
+  "split_stats": {
+    "train_rows": 21080,
+    "val_rows": 4556,
+    "test_rows": 4420,
+    "train_targets": 310,
+    "val_targets": 67,
+    "test_targets": 65
+  }
+}
