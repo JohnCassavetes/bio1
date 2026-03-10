@@ -1,0 +1,382 @@
+{
+  "random": {
+    "ligand_only_ridge": {
+      "selected_alpha": 100.0,
+      "alpha_trials": [
+        {
+          "alpha": 0.1,
+          "val_rmse": 0.800934
+        },
+        {
+          "alpha": 1.0,
+          "val_rmse": 0.800932
+        },
+        {
+          "alpha": 10.0,
+          "val_rmse": 0.800934
+        },
+        {
+          "alpha": 100.0,
+          "val_rmse": 0.800931
+        }
+      ],
+      "metrics": {
+        "rows": 4509,
+        "targets": 442,
+        "rmse": 0.784241,
+        "spearman": 0.463254,
+        "roc_auc": 0.795226,
+        "prediction_interval_95_coverage": 0.953426,
+        "mean_prediction_std": 0.776342,
+        "mean_per_target_spearman": 0.514318,
+        "mean_top_10pct_enrichment": 3.23184,
+        "mean_per_target_roc_auc": 0.831421
+      }
+    },
+    "ridge_ensemble": {
+      "selected_alpha": 100.0,
+      "alpha_trials": [
+        {
+          "alpha": 0.1,
+          "val_rmse": 0.785134
+        },
+        {
+          "alpha": 1.0,
+          "val_rmse": 0.785134
+        },
+        {
+          "alpha": 10.0,
+          "val_rmse": 0.785132
+        },
+        {
+          "alpha": 100.0,
+          "val_rmse": 0.785116
+        }
+      ],
+      "feature_metadata": {
+        "fingerprint_bits": 1024,
+        "fingerprint_radius": 2,
+        "sequence_feature_count": 22,
+        "assay_feature_count": 3,
+        "source_feature_count": 2,
+        "total_features": 1051
+      },
+      "metrics": {
+        "rows": 4509,
+        "targets": 442,
+        "rmse": 0.76763,
+        "spearman": 0.486226,
+        "roc_auc": 0.814481,
+        "prediction_interval_95_coverage": 0.956753,
+        "mean_prediction_std": 0.787912,
+        "mean_per_target_spearman": 0.512076,
+        "mean_top_10pct_enrichment": 3.241914,
+        "mean_per_target_roc_auc": 0.830858
+      }
+    }
+  },
+  "cold_target": {
+    "ligand_only_ridge": {
+      "selected_alpha": 100.0,
+      "alpha_trials": [
+        {
+          "alpha": 0.1,
+          "val_rmse": 0.795385
+        },
+        {
+          "alpha": 1.0,
+          "val_rmse": 0.795384
+        },
+        {
+          "alpha": 10.0,
+          "val_rmse": 0.795385
+        },
+        {
+          "alpha": 100.0,
+          "val_rmse": 0.795386
+        }
+      ],
+      "metrics": {
+        "rows": 4420,
+        "targets": 65,
+        "rmse": 0.735769,
+        "spearman": 0.449166,
+        "roc_auc": 0.793998,
+        "prediction_interval_95_coverage": 0.955656,
+        "mean_prediction_std": 0.830538,
+        "mean_per_target_spearman": 0.46163,
+        "mean_top_10pct_enrichment": 4.16189,
+        "mean_per_target_roc_auc": 0.818246
+      }
+    },
+    "ridge_ensemble": {
+      "selected_alpha": 100.0,
+      "alpha_trials": [
+        {
+          "alpha": 0.1,
+          "val_rmse": 0.784483
+        },
+        {
+          "alpha": 1.0,
+          "val_rmse": 0.784483
+        },
+        {
+          "alpha": 10.0,
+          "val_rmse": 0.784477
+        },
+        {
+          "alpha": 100.0,
+          "val_rmse": 0.784423
+        }
+      ],
+      "feature_metadata": {
+        "fingerprint_bits": 1024,
+        "fingerprint_radius": 2,
+        "sequence_feature_count": 22,
+        "assay_feature_count": 3,
+        "source_feature_count": 2,
+        "total_features": 1051
+      },
+      "metrics": {
+        "rows": 4420,
+        "targets": 65,
+        "rmse": 0.73034,
+        "spearman": 0.455879,
+        "roc_auc": 0.800849,
+        "prediction_interval_95_coverage": 0.955882,
+        "mean_prediction_std": 0.838339,
+        "mean_per_target_spearman": 0.460224,
+        "mean_top_10pct_enrichment": 4.16189,
+        "mean_per_target_roc_auc": 0.816765
+      }
+    }
+  },
+  "cold_ligand": {
+    "ligand_only_ridge": {
+      "selected_alpha": 10.0,
+      "alpha_trials": [
+        {
+          "alpha": 0.1,
+          "val_rmse": 1.030752
+        },
+        {
+          "alpha": 1.0,
+          "val_rmse": 3.0764
+        },
+        {
+          "alpha": 10.0,
+          "val_rmse": 1.021104
+        },
+        {
+          "alpha": 100.0,
+          "val_rmse": 1.026979
+        }
+      ],
+      "metrics": {
+        "rows": 3978,
+        "targets": 442,
+        "rmse": 0.823811,
+        "spearman": 0.266513,
+        "roc_auc": 0.657212,
+        "prediction_interval_95_coverage": 0.987934,
+        "mean_prediction_std": 1.276711,
+        "mean_per_target_spearman": 0.271588,
+        "mean_top_10pct_enrichment": 2.274324,
+        "mean_per_target_roc_auc": 0.654293
+      }
+    },
+    "ridge_ensemble": {
+      "selected_alpha": 10.0,
+      "alpha_trials": [
+        {
+          "alpha": 0.1,
+          "val_rmse": 1.005161
+        },
+        {
+          "alpha": 1.0,
+          "val_rmse": 2.389813
+        },
+        {
+          "alpha": 10.0,
+          "val_rmse": 0.999565
+        },
+        {
+          "alpha": 100.0,
+          "val_rmse": 1.003725
+        }
+      ],
+      "feature_metadata": {
+        "fingerprint_bits": 1024,
+        "fingerprint_radius": 2,
+        "sequence_feature_count": 22,
+        "assay_feature_count": 3,
+        "source_feature_count": 2,
+        "total_features": 1051
+      },
+      "metrics": {
+        "rows": 3978,
+        "targets": 442,
+        "rmse": 0.825351,
+        "spearman": 0.29045,
+        "roc_auc": 0.686348,
+        "prediction_interval_95_coverage": 0.986677,
+        "mean_prediction_std": 1.371304,
+        "mean_per_target_spearman": 0.28037,
+        "mean_top_10pct_enrichment": 2.274324,
+        "mean_per_target_roc_auc": 0.661722
+      }
+    }
+  },
+  "scaffold": {
+    "ligand_only_ridge": {
+      "selected_alpha": 1.0,
+      "alpha_trials": [
+        {
+          "alpha": 0.1,
+          "val_rmse": 1.010867
+        },
+        {
+          "alpha": 1.0,
+          "val_rmse": 1.010866
+        },
+        {
+          "alpha": 10.0,
+          "val_rmse": 1.097097
+        },
+        {
+          "alpha": 100.0,
+          "val_rmse": 1.01621
+        }
+      ],
+      "metrics": {
+        "rows": 3978,
+        "targets": 442,
+        "rmse": 0.853489,
+        "spearman": 0.080439,
+        "roc_auc": 0.55901,
+        "prediction_interval_95_coverage": 0.963801,
+        "mean_prediction_std": 1.225069,
+        "mean_per_target_spearman": 0.096884,
+        "mean_top_10pct_enrichment": 0.545886,
+        "mean_per_target_roc_auc": 0.56144
+      }
+    },
+    "ridge_ensemble": {
+      "selected_alpha": 1.0,
+      "alpha_trials": [
+        {
+          "alpha": 0.1,
+          "val_rmse": 0.992675
+        },
+        {
+          "alpha": 1.0,
+          "val_rmse": 0.992676
+        },
+        {
+          "alpha": 10.0,
+          "val_rmse": 0.998417
+        },
+        {
+          "alpha": 100.0,
+          "val_rmse": 0.993103
+        }
+      ],
+      "feature_metadata": {
+        "fingerprint_bits": 1024,
+        "fingerprint_radius": 2,
+        "sequence_feature_count": 22,
+        "assay_feature_count": 3,
+        "source_feature_count": 2,
+        "total_features": 1051
+      },
+      "metrics": {
+        "rows": 3978,
+        "targets": 442,
+        "rmse": 0.813675,
+        "spearman": 0.209072,
+        "roc_auc": 0.638469,
+        "prediction_interval_95_coverage": 0.951986,
+        "mean_prediction_std": 1.188937,
+        "mean_per_target_spearman": 0.220266,
+        "mean_top_10pct_enrichment": 3.512184,
+        "mean_per_target_roc_auc": 0.687241
+      }
+    }
+  },
+  "both_new": {
+    "ligand_only_ridge": {
+      "selected_alpha": 10.0,
+      "alpha_trials": [
+        {
+          "alpha": 0.1,
+          "val_rmse": 0.895858
+        },
+        {
+          "alpha": 1.0,
+          "val_rmse": 1.245646
+        },
+        {
+          "alpha": 10.0,
+          "val_rmse": 0.866994
+        },
+        {
+          "alpha": 100.0,
+          "val_rmse": 0.89226
+        }
+      ],
+      "metrics": {
+        "rows": 585,
+        "targets": 65,
+        "rmse": 0.812868,
+        "spearman": 0.315545,
+        "roc_auc": 0.734811,
+        "prediction_interval_95_coverage": 0.931624,
+        "mean_prediction_std": 0.789684,
+        "mean_per_target_spearman": 0.374175,
+        "mean_top_10pct_enrichment": 1.09375,
+        "mean_per_target_roc_auc": 0.789104
+      }
+    },
+    "ridge_ensemble": {
+      "selected_alpha": 10.0,
+      "alpha_trials": [
+        {
+          "alpha": 0.1,
+          "val_rmse": 0.878181
+        },
+        {
+          "alpha": 1.0,
+          "val_rmse": 1.037152
+        },
+        {
+          "alpha": 10.0,
+          "val_rmse": 0.865118
+        },
+        {
+          "alpha": 100.0,
+          "val_rmse": 0.876502
+        }
+      ],
+      "feature_metadata": {
+        "fingerprint_bits": 1024,
+        "fingerprint_radius": 2,
+        "sequence_feature_count": 22,
+        "assay_feature_count": 3,
+        "source_feature_count": 2,
+        "total_features": 1051
+      },
+      "metrics": {
+        "rows": 585,
+        "targets": 65,
+        "rmse": 0.812135,
+        "spearman": 0.292107,
+        "roc_auc": 0.700795,
+        "prediction_interval_95_coverage": 0.924786,
+        "mean_prediction_std": 0.767678,
+        "mean_per_target_spearman": 0.374175,
+        "mean_top_10pct_enrichment": 1.09375,
+        "mean_per_target_roc_auc": 0.789104
+      }
+    }
+  }
+}

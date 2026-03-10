@@ -4,7 +4,8 @@ from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-from scipy.stats import spearmanr
+import warnings
+from scipy.stats import ConstantInputWarning, spearmanr
 from sklearn.metrics import mean_squared_error, roc_auc_score
 
 
@@ -17,7 +18,9 @@ def safe_spearman(y_true: np.ndarray, y_pred: np.ndarray) -> Optional[float]:
     """Spearman correlation with guard rails for degenerate targets."""
     if len(y_true) < 2:
         return None
-    correlation, _ = spearmanr(y_true, y_pred)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=ConstantInputWarning)
+        correlation, _ = spearmanr(y_true, y_pred)
     if np.isnan(correlation):
         return None
     return float(correlation)

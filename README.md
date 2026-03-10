@@ -39,9 +39,13 @@ bio1/
     raw/
     processed/
   docs/
+    benchmark_protocol.md
+    benchmark_results.md
     methodology.md
     project_plan.md
     results_baseline.md
+  paper/
+    draft.md
   models/
     baseline/
   results/
@@ -49,8 +53,11 @@ bio1/
   scripts/
     download_data.py
     process_dataset.py
+    generate_benchmark_splits.py
     train_baseline.py
     predict_rank.py
+    evaluate_budgeted_policies.py
+    run_benchmark_suite.py
   src/kinase_ligand_ranking/
   tests/
 ```
@@ -66,10 +73,20 @@ python scripts/download_data.py --source davis
 # 2. Clean and split the dataset
 python scripts/process_dataset.py --source davis
 
-# 3. Train and evaluate the baseline
+# 3. Generate benchmark split families
+python scripts/generate_benchmark_splits.py
+
+# 4. Train and evaluate the baseline
 python scripts/train_baseline.py
 
-# 4. Score new ligand-target pairs
+# 5. Evaluate budget-constrained decision policies
+python scripts/evaluate_budgeted_policies.py
+
+# 6. Run comparison suites across split families
+python scripts/run_benchmark_suite.py --models ligand_only_ridge ridge_ensemble
+python scripts/run_benchmark_suite.py --models dual_tower_uq --splits random cold_target
+
+# 7. Score new ligand-target pairs
 python scripts/predict_rank.py --input path/to/candidates.csv
 ```
 
@@ -128,6 +145,31 @@ Held-out test metrics from [metrics.json](/Users/a/Desktop/bio1/results/baseline
 - Mean top-10% enrichment: `3.424x`
 - 95% interval coverage after calibration: `0.952`
 
+Decision-oriented results from [budget_policy_metrics.json](/Users/a/Desktop/bio1/results/baseline/budget_policy_metrics.json):
+
+- budget-1 hit rate: `0.785`
+- budget-3 hit rate: `0.646`
+- budget-5 hit rate: `0.600`
+- budget-10 hit rate: `0.506`
+- uncertainty/error Spearman: `0.431`
+
+The current calibrated uncertainty is informative about error, but the simple
+risk-adjusted selection policy does not yet beat mean-only ranking on the Davis
+test split. That is now part of the benchmark story rather than something being
+hidden.
+
+Benchmark comparison results:
+
+- ridge baselines across `random`, `cold_target`, `cold_ligand`, `scaffold`, and `both_new` are summarized in [results/benchmark_ridge/summary.csv](/Users/a/Desktop/bio1/results/benchmark_ridge/summary.csv)
+- the interaction-aware `dual_tower_uq` model is summarized in [results/benchmark_dual_tower/summary.csv](/Users/a/Desktop/bio1/results/benchmark_dual_tower/summary.csv)
+- the split manifests live in [data/benchmark/manifest.json](/Users/a/Desktop/bio1/data/benchmark/manifest.json)
+
+Current takeaways:
+
+- ligand/scaffold/both-new splits are materially harsher than random splits for the ridge baselines
+- target-held-out is not automatically the hardest split on Davis
+- the interaction-aware model materially outperforms the ridge baselines on the currently run `random` and `cold_target` splits
+
 ## Inference Input Format
 
 `scripts/predict_rank.py` expects a CSV with:
@@ -148,7 +190,8 @@ python -m unittest discover -s tests
 
 ## Roadmap
 
-- Add stronger nonlinear baselines
-- Add explicit BindingDB support validation once API schema is stabilized
+- Add standard literature baselines under the same realistic benchmark
+- Implement similarity-aware and mutation-aware split protocols
 - Add richer protein features beyond amino-acid composition
-- Add experiment tracking and hyperparameter sweeps
+- Extend decision policies beyond simple risk adjustment
+- Add explicit BindingDB support validation once API schema is stabilized

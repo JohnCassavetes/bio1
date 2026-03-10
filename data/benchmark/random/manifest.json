@@ -1,0 +1,16 @@
+{
+  "split_type": "random",
+  "grouping": "row",
+  "random_seed": 42,
+  "retained_rows": 30056,
+  "discarded_rows": 0,
+  "train_rows": 21039,
+  "val_rows": 4508,
+  "test_rows": 4509,
+  "train_targets": 442,
+  "val_targets": 442,
+  "test_targets": 442,
+  "train_ligands": 68,
+  "val_ligands": 68,
+  "test_ligands": 68
+}

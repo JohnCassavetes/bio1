@@ -46,6 +46,20 @@ Training procedure:
 5. Refit the final ensemble on train+validation with the selected alpha
 6. Evaluate once on held-out test targets
 
+## Comparison Models
+
+The repository now supports a benchmark suite with:
+
+- `ligand_only_ridge`: ligand-only ridge ensemble
+- `ridge_ensemble`: ligand + target feature ridge ensemble
+- `dual_tower_uq`: interaction-aware projected cross-feature tree ensemble with calibrated uncertainty
+
+The comparison suite is intended to separate:
+
+- the value of target information
+- the value of interaction-aware modeling
+- the value of calibrated uncertainty
+
 ## Evaluation
 
 The project reports:
@@ -58,3 +72,19 @@ The project reports:
 - calibrated 95% prediction-interval coverage
 
 Per-target metrics are written to `results/baseline/test_per_target_metrics.csv`.
+
+## Decision-Oriented Evaluation
+
+The repository also evaluates budget-constrained prioritization policies using
+saved validation and test predictions.
+
+Implemented policies:
+
+- mean-only ranking
+- probability-of-activity ranking
+- risk-adjusted ranking with validation-tuned `mean - lambda * std`
+
+Outputs are written to:
+
+- `results/baseline/budget_policy_metrics.csv`
+- `results/baseline/budget_policy_metrics.json`

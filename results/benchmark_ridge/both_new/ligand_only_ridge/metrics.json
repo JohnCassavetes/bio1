@@ -1,0 +1,33 @@
+{
+  "selected_alpha": 10.0,
+  "alpha_trials": [
+    {
+      "alpha": 0.1,
+      "val_rmse": 0.895858
+    },
+    {
+      "alpha": 1.0,
+      "val_rmse": 1.245646
+    },
+    {
+      "alpha": 10.0,
+      "val_rmse": 0.866994
+    },
+    {
+      "alpha": 100.0,
+      "val_rmse": 0.89226
+    }
+  ],
+  "metrics": {
+    "rows": 585,
+    "targets": 65,
+    "rmse": 0.812868,
+    "spearman": 0.315545,
+    "roc_auc": 0.734811,
+    "prediction_interval_95_coverage": 0.931624,
+    "mean_prediction_std": 0.789684,
+    "mean_per_target_spearman": 0.374175,
+    "mean_top_10pct_enrichment": 1.09375,
+    "mean_per_target_roc_auc": 0.789104
+  }
+}

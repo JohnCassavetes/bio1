@@ -1,0 +1,363 @@
+{
+  "active_threshold": 6.0,
+  "budgets": [
+    1,
+    3,
+    5,
+    10
+  ],
+  "uncertainty_diagnostics": {
+    "validation": {
+      "spearman_prediction_std_vs_absolute_error": 0.419127,
+      "quantile_bands": [
+        {
+          "quantile": 0.25,
+          "low_uncertainty_mean_absolute_error": 0.302176,
+          "high_uncertainty_mean_absolute_error": 0.81412
+        },
+        {
+          "quantile": 0.5,
+          "low_uncertainty_mean_absolute_error": 0.375421,
+          "high_uncertainty_mean_absolute_error": 0.698052
+        },
+        {
+          "quantile": 0.75,
+          "low_uncertainty_mean_absolute_error": 0.444276,
+          "high_uncertainty_mean_absolute_error": 0.614924
+        }
+      ]
+    },
+    "test": {
+      "spearman_prediction_std_vs_absolute_error": 0.431368,
+      "quantile_bands": [
+        {
+          "quantile": 0.25,
+          "low_uncertainty_mean_absolute_error": 0.27888,
+          "high_uncertainty_mean_absolute_error": 0.777631
+        },
+        {
+          "quantile": 0.5,
+          "low_uncertainty_mean_absolute_error": 0.346396,
+          "high_uncertainty_mean_absolute_error": 0.66612
+        },
+        {
+          "quantile": 0.75,
+          "low_uncertainty_mean_absolute_error": 0.4158,
+          "high_uncertainty_mean_absolute_error": 0.582051
+        }
+      ]
+    }
+  },
+  "validation_tuning": {
+    "1": {
+      "selected_risk_lambda": -0.5,
+      "trials": [
+        {
+          "risk_lambda": -1.0,
+          "hit_rate_at_budget": 0.791045,
+          "mean_p_activity_at_budget": 7.125766,
+          "regret_at_budget": 1.411093
+        },
+        {
+          "risk_lambda": -0.5,
+          "hit_rate_at_budget": 0.850746,
+          "mean_p_activity_at_budget": 7.287771,
+          "regret_at_budget": 1.249087
+        },
+        {
+          "risk_lambda": 0.0,
+          "hit_rate_at_budget": 0.850746,
+          "mean_p_activity_at_budget": 7.287771,
+          "regret_at_budget": 1.249087
+        },
+        {
+          "risk_lambda": 0.25,
+          "hit_rate_at_budget": 0.850746,
+          "mean_p_activity_at_budget": 7.287771,
+          "regret_at_budget": 1.249087
+        },
+        {
+          "risk_lambda": 0.5,
+          "hit_rate_at_budget": 0.850746,
+          "mean_p_activity_at_budget": 7.287771,
+          "regret_at_budget": 1.249087
+        },
+        {
+          "risk_lambda": 0.75,
+          "hit_rate_at_budget": 0.850746,
+          "mean_p_activity_at_budget": 7.260366,
+          "regret_at_budget": 1.276492
+        },
+        {
+          "risk_lambda": 1.0,
+          "hit_rate_at_budget": 0.820896,
+          "mean_p_activity_at_budget": 7.137471,
+          "regret_at_budget": 1.399387
+        },
+        {
+          "risk_lambda": 1.5,
+          "hit_rate_at_budget": 0.776119,
+          "mean_p_activity_at_budget": 7.012814,
+          "regret_at_budget": 1.524045
+        },
+        {
+          "risk_lambda": 2.0,
+          "hit_rate_at_budget": 0.731343,
+          "mean_p_activity_at_budget": 6.926943,
+          "regret_at_budget": 1.609915
+        }
+      ]
+    },
+    "3": {
+      "selected_risk_lambda": 0.0,
+      "trials": [
+        {
+          "risk_lambda": -1.0,
+          "hit_rate_at_budget": 0.696517,
+          "mean_p_activity_at_budget": 6.764981,
+          "regret_at_budget": 1.27239
+        },
+        {
+          "risk_lambda": -0.5,
+          "hit_rate_at_budget": 0.716418,
+          "mean_p_activity_at_budget": 6.782099,
+          "regret_at_budget": 1.255272
+        },
+        {
+          "risk_lambda": 0.0,
+          "hit_rate_at_budget": 0.726368,
+          "mean_p_activity_at_budget": 6.857333,
+          "regret_at_budget": 1.180038
+        },
+        {
+          "risk_lambda": 0.25,
+          "hit_rate_at_budget": 0.716418,
+          "mean_p_activity_at_budget": 6.830973,
+          "regret_at_budget": 1.206398
+        },
+        {
+          "risk_lambda": 0.5,
+          "hit_rate_at_budget": 0.681592,
+          "mean_p_activity_at_budget": 6.800486,
+          "regret_at_budget": 1.236885
+        },
+        {
+          "risk_lambda": 0.75,
+          "hit_rate_at_budget": 0.681592,
+          "mean_p_activity_at_budget": 6.796249,
+          "regret_at_budget": 1.241122
+        },
+        {
+          "risk_lambda": 1.0,
+          "hit_rate_at_budget": 0.686567,
+          "mean_p_activity_at_budget": 6.790277,
+          "regret_at_budget": 1.247094
+        },
+        {
+          "risk_lambda": 1.5,
+          "hit_rate_at_budget": 0.661692,
+          "mean_p_activity_at_budget": 6.718321,
+          "regret_at_budget": 1.31905
+        },
+        {
+          "risk_lambda": 2.0,
+          "hit_rate_at_budget": 0.606965,
+          "mean_p_activity_at_budget": 6.576656,
+          "regret_at_budget": 1.460715
+        }
+      ]
+    },
+    "5": {
+      "selected_risk_lambda": 0.0,
+      "trials": [
+        {
+          "risk_lambda": -1.0,
+          "hit_rate_at_budget": 0.6,
+          "mean_p_activity_at_budget": 6.548251,
+          "regret_at_budget": 1.096737
+        },
+        {
+          "risk_lambda": -0.5,
+          "hit_rate_at_budget": 0.620896,
+          "mean_p_activity_at_budget": 6.574188,
+          "regret_at_budget": 1.070801
+        },
+        {
+          "risk_lambda": 0.0,
+          "hit_rate_at_budget": 0.635821,
+          "mean_p_activity_at_budget": 6.604614,
+          "regret_at_budget": 1.040374
+        },
+        {
+          "risk_lambda": 0.25,
+          "hit_rate_at_budget": 0.620896,
+          "mean_p_activity_at_budget": 6.573789,
+          "regret_at_budget": 1.071199
+        },
+        {
+          "risk_lambda": 0.5,
+          "hit_rate_at_budget": 0.632836,
+          "mean_p_activity_at_budget": 6.587306,
+          "regret_at_budget": 1.057683
+        },
+        {
+          "risk_lambda": 0.75,
+          "hit_rate_at_budget": 0.629851,
+          "mean_p_activity_at_budget": 6.591268,
+          "regret_at_budget": 1.053721
+        },
+        {
+          "risk_lambda": 1.0,
+          "hit_rate_at_budget": 0.60597,
+          "mean_p_activity_at_budget": 6.524578,
+          "regret_at_budget": 1.120411
+        },
+        {
+          "risk_lambda": 1.5,
+          "hit_rate_at_budget": 0.540299,
+          "mean_p_activity_at_budget": 6.363979,
+          "regret_at_budget": 1.281009
+        },
+        {
+          "risk_lambda": 2.0,
+          "hit_rate_at_budget": 0.447761,
+          "mean_p_activity_at_budget": 6.163835,
+          "regret_at_budget": 1.481153
+        }
+      ]
+    },
+    "10": {
+      "selected_risk_lambda": 0.25,
+      "trials": [
+        {
+          "risk_lambda": -1.0,
+          "hit_rate_at_budget": 0.5,
+          "mean_p_activity_at_budget": 6.268491,
+          "regret_at_budget": 0.788946
+        },
+        {
+          "risk_lambda": -0.5,
+          "hit_rate_at_budget": 0.519403,
+          "mean_p_activity_at_budget": 6.317506,
+          "regret_at_budget": 0.739931
+        },
+        {
+          "risk_lambda": 0.0,
+          "hit_rate_at_budget": 0.544776,
+          "mean_p_activity_at_budget": 6.350115,
+          "regret_at_budget": 0.707322
+        },
+        {
+          "risk_lambda": 0.25,
+          "hit_rate_at_budget": 0.547761,
+          "mean_p_activity_at_budget": 6.355103,
+          "regret_at_budget": 0.702334
+        },
+        {
+          "risk_lambda": 0.5,
+          "hit_rate_at_budget": 0.532836,
+          "mean_p_activity_at_budget": 6.293527,
+          "regret_at_budget": 0.76391
+        },
+        {
+          "risk_lambda": 0.75,
+          "hit_rate_at_budget": 0.504478,
+          "mean_p_activity_at_budget": 6.236669,
+          "regret_at_budget": 0.820768
+        },
+        {
+          "risk_lambda": 1.0,
+          "hit_rate_at_budget": 0.438806,
+          "mean_p_activity_at_budget": 6.08711,
+          "regret_at_budget": 0.970327
+        },
+        {
+          "risk_lambda": 1.5,
+          "hit_rate_at_budget": 0.356716,
+          "mean_p_activity_at_budget": 5.877363,
+          "regret_at_budget": 1.180074
+        },
+        {
+          "risk_lambda": 2.0,
+          "hit_rate_at_budget": 0.297015,
+          "mean_p_activity_at_budget": 5.742742,
+          "regret_at_budget": 1.314695
+        }
+      ]
+    }
+  },
+  "test": {
+    "1": {
+      "mean": {
+        "hit_rate_at_budget": 0.784615,
+        "mean_p_activity_at_budget": 7.201215,
+        "regret_at_budget": 1.257375
+      },
+      "prob_active": {
+        "hit_rate_at_budget": 0.784615,
+        "mean_p_activity_at_budget": 7.201215,
+        "regret_at_budget": 1.257375
+      },
+      "risk_adjusted": {
+        "risk_lambda": -0.5,
+        "hit_rate_at_budget": 0.784615,
+        "mean_p_activity_at_budget": 7.152073,
+        "regret_at_budget": 1.306517
+      }
+    },
+    "3": {
+      "mean": {
+        "hit_rate_at_budget": 0.646154,
+        "mean_p_activity_at_budget": 6.694398,
+        "regret_at_budget": 1.213794
+      },
+      "prob_active": {
+        "hit_rate_at_budget": 0.635897,
+        "mean_p_activity_at_budget": 6.63233,
+        "regret_at_budget": 1.275863
+      },
+      "risk_adjusted": {
+        "risk_lambda": 0.0,
+        "hit_rate_at_budget": 0.646154,
+        "mean_p_activity_at_budget": 6.694398,
+        "regret_at_budget": 1.213794
+      }
+    },
+    "5": {
+      "mean": {
+        "hit_rate_at_budget": 0.6,
+        "mean_p_activity_at_budget": 6.46751,
+        "regret_at_budget": 1.082415
+      },
+      "prob_active": {
+        "hit_rate_at_budget": 0.590769,
+        "mean_p_activity_at_budget": 6.458193,
+        "regret_at_budget": 1.091732
+      },
+      "risk_adjusted": {
+        "risk_lambda": 0.0,
+        "hit_rate_at_budget": 0.6,
+        "mean_p_activity_at_budget": 6.46751,
+        "regret_at_budget": 1.082415
+      }
+    },
+    "10": {
+      "mean": {
+        "hit_rate_at_budget": 0.506154,
+        "mean_p_activity_at_budget": 6.225741,
+        "regret_at_budget": 0.742277
+      },
+      "prob_active": {
+        "hit_rate_at_budget": 0.498462,
+        "mean_p_activity_at_budget": 6.21198,
+        "regret_at_budget": 0.756038
+      },
+      "risk_adjusted": {
+        "risk_lambda": 0.25,
+        "hit_rate_at_budget": 0.492308,
+        "mean_p_activity_at_budget": 6.199358,
+        "regret_at_budget": 0.76866
+      }
+    }
+  }
+}

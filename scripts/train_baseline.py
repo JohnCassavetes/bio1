@@ -130,6 +130,14 @@ def main() -> None:
     )
     calibration_ensemble.fit(X_train, y_train)
     uncertainty_scale = calibration_ensemble.calibrate_uncertainty(X_val, y_val)
+    calibration_ensemble.uncertainty_scale = uncertainty_scale
+
+    val_pred_mean, val_pred_std = calibration_ensemble.predict(X_val)
+    val_predictions = attach_predictions(
+        val_df,
+        val_pred_mean,
+        val_pred_std,
+    )
 
     train_val_df = pd.concat([train_df, val_df], ignore_index=True)
     X_train_val, _ = build_feature_matrix(
@@ -189,6 +197,7 @@ def main() -> None:
     model_path = args.model_dir / "ridge_ensemble.joblib"
     ensemble.save(model_path, metadata=metadata)
 
+    val_predictions.to_csv(args.results_dir / "val_predictions.csv", index=False)
     train_val_predictions.to_csv(args.results_dir / "train_val_predictions.csv", index=False)
     test_predictions.to_csv(args.results_dir / "test_predictions.csv", index=False)
     test_metrics["per_target"].to_csv(args.results_dir / "test_per_target_metrics.csv", index=False)

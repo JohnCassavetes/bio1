@@ -1,0 +1,16 @@
+{
+  "split_type": "both_new",
+  "grouping": "target_id+smiles",
+  "random_seed": 42,
+  "retained_rows": 16202,
+  "discarded_rows": 13854,
+  "train_rows": 14880,
+  "val_rows": 737,
+  "test_rows": 585,
+  "train_targets": 310,
+  "val_targets": 67,
+  "test_targets": 65,
+  "train_ligands": 48,
+  "val_ligands": 11,
+  "test_ligands": 9
+}

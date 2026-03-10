@@ -1,6 +1,6 @@
 """Feature builders for kinase-ligand ranking baselines."""
 
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -75,6 +75,31 @@ def build_feature_matrix(
     fingerprint_radius: int = 2,
 ) -> Tuple[np.ndarray, Dict[str, int]]:
     """Build a dense design matrix from processed kinase-ligand rows."""
+    components, metadata = build_feature_components(
+        df,
+        fingerprint_bits=fingerprint_bits,
+        fingerprint_radius=fingerprint_radius,
+    )
+    matrix = np.concatenate(
+        [
+            components["ligand"],
+            components["target"],
+            components["assay"],
+            components["source"],
+        ],
+        axis=1,
+    )
+    metadata["total_features"] = int(matrix.shape[1])
+    return matrix, metadata
+
+
+def build_feature_components(
+    df: pd.DataFrame,
+    *,
+    fingerprint_bits: int = 1024,
+    fingerprint_radius: int = 2,
+) -> Tuple[Dict[str, np.ndarray], Dict[str, int]]:
+    """Build component matrices for ligand, target, assay, and source features."""
     generator = _build_fingerprint_generator(
         radius=fingerprint_radius,
         n_bits=fingerprint_bits,
@@ -97,15 +122,12 @@ def build_feature_matrix(
         assay_rows.append(categorical_one_hot(row.affinity_type, AFFINITY_TYPES))
         source_rows.append(categorical_one_hot(row.source, SOURCES))
 
-    matrix = np.concatenate(
-        [
-            np.asarray(fingerprint_rows, dtype=np.float32),
-            np.asarray(sequence_rows, dtype=np.float32),
-            np.asarray(assay_rows, dtype=np.float32),
-            np.asarray(source_rows, dtype=np.float32),
-        ],
-        axis=1,
-    )
+    components = {
+        "ligand": np.asarray(fingerprint_rows, dtype=np.float32),
+        "target": np.asarray(sequence_rows, dtype=np.float32),
+        "assay": np.asarray(assay_rows, dtype=np.float32),
+        "source": np.asarray(source_rows, dtype=np.float32),
+    }
 
     metadata = {
         "fingerprint_bits": fingerprint_bits,
@@ -113,6 +135,5 @@ def build_feature_matrix(
         "sequence_feature_count": len(AMINO_ACIDS) + 2,
         "assay_feature_count": len(AFFINITY_TYPES),
         "source_feature_count": len(SOURCES),
-        "total_features": int(matrix.shape[1]),
     }
-    return matrix, metadata
+    return components, metadata

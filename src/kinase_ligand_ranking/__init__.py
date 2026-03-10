@@ -5,4 +5,6 @@ __all__ = [
     "features",
     "metrics",
     "modeling",
+    "neural_modeling",
+    "splits",
 ]

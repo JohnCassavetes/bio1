@@ -1,0 +1,41 @@
+{
+  "selected_alpha": 10.0,
+  "alpha_trials": [
+    {
+      "alpha": 0.1,
+      "val_rmse": 1.005161
+    },
+    {
+      "alpha": 1.0,
+      "val_rmse": 2.389813
+    },
+    {
+      "alpha": 10.0,
+      "val_rmse": 0.999565
+    },
+    {
+      "alpha": 100.0,
+      "val_rmse": 1.003725
+    }
+  ],
+  "feature_metadata": {
+    "fingerprint_bits": 1024,
+    "fingerprint_radius": 2,
+    "sequence_feature_count": 22,
+    "assay_feature_count": 3,
+    "source_feature_count": 2,
+    "total_features": 1051
+  },
+  "metrics": {
+    "rows": 3978,
+    "targets": 442,
+    "rmse": 0.825351,
+    "spearman": 0.29045,
+    "roc_auc": 0.686348,
+    "prediction_interval_95_coverage": 0.986677,
+    "mean_prediction_std": 1.371304,
+    "mean_per_target_spearman": 0.28037,
+    "mean_top_10pct_enrichment": 2.274324,
+    "mean_per_target_roc_auc": 0.661722
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "split_type": "scaffold",
+  "grouping": "scaffold_id",
+  "random_seed": 42,
+  "retained_rows": 30056,
+  "discarded_rows": 0,
+  "train_rows": 21216,
+  "val_rows": 4862,
+  "test_rows": 3978,
+  "train_targets": 442,
+  "val_targets": 442,
+  "test_targets": 442,
+  "train_ligands": 48,
+  "val_ligands": 11,
+  "test_ligands": 9
+}

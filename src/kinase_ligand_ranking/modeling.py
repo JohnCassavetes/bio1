@@ -38,7 +38,9 @@ class RidgeEnsembleRegressor:
         for model_index in range(self.config.ensemble_size):
             indices = rng.choice(len(X_scaled), size=sample_size, replace=True)
             model = Ridge(alpha=self.config.alpha, random_state=self.config.random_seed + model_index)
-            model.fit(X_scaled[indices], y[indices])
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=LinAlgWarning)
+                model.fit(X_scaled[indices], y[indices])
             self.models.append(model)
         return self
 

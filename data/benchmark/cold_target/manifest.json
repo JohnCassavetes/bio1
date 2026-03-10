@@ -1,0 +1,16 @@
+{
+  "split_type": "cold_target",
+  "grouping": "target_id",
+  "random_seed": 42,
+  "retained_rows": 30056,
+  "discarded_rows": 0,
+  "train_rows": 21080,
+  "val_rows": 4556,
+  "test_rows": 4420,
+  "train_targets": 310,
+  "val_targets": 67,
+  "test_targets": 65,
+  "train_ligands": 68,
+  "val_ligands": 68,
+  "test_ligands": 68
+}
