@@ -1,37 +1,35 @@
 #!/usr/bin/env python3
 """Download kinase-ligand binding data.
 
-Primary source: Davis kinase dataset from DeepDTA GitHub repository.
-  - 442 kinases x 68 ligands with Kd measurements
-  - Reference: Davis et al., Nature Biotechnology 29, 1046-1051 (2011)
+Default source: Davis kinase dataset from the DeepDTA repository.
+  - 442 kinase targets x 68 ligands with Kd measurements
+  - Includes target identifiers and protein sequences
 
-Alternative: BindingDB REST API (may be intermittently unavailable).
+Optional source: BindingDB REST API for a smaller curated kinase panel.
 
 Usage:
-    python scripts/download_data.py                    # Davis (default)
-    python scripts/download_data.py --source davis     # Davis explicitly
-    python scripts/download_data.py --source bindingdb # BindingDB API
+    python scripts/download_data.py
+    python scripts/download_data.py --source davis
+    python scripts/download_data.py --source bindingdb
 """
 
-import io
+import argparse
 import json
+import logging
 import pickle
 import time
-import logging
-import argparse
-from pathlib import Path
+import warnings
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import numpy as np
-import requests
 import pandas as pd
+import requests
 
 logger = logging.getLogger(__name__)
 
-# --- Configuration ---
-
-BASE_DIR = Path(__file__).resolve().parent.parent  # bio1/
+BASE_DIR = Path(__file__).resolve().parent.parent
 RAW_DIR = BASE_DIR / "data" / "raw"
 
 KINASE_TARGETS = {
@@ -45,7 +43,6 @@ KINASE_TARGETS = {
     "AURKA": "O14965",
 }
 
-# DeepDTA Davis dataset URLs (well-established, stable)
 DAVIS_LIGANDS_URL = (
     "https://raw.githubusercontent.com/hkmztrk/DeepDTA/master/data/davis/ligands_can.txt"
 )
@@ -64,75 +61,60 @@ REQUEST_TIMEOUT_SEC = 30
 MAX_RETRIES = 3
 
 
-# --- Davis dataset download ---
-
-
 def download_davis(output_dir: Path = RAW_DIR) -> Path:
-    """Download the Davis kinase dataset from DeepDTA GitHub.
-
-    The Davis dataset contains Kd values for 442 kinases x 68 ligands.
-    Downloads three files (ligands, proteins, affinity matrix) and
-    combines them into a single CSV.
-
-    Returns path to the saved CSV file.
-    """
+    """Download the Davis kinase dataset and flatten it into a CSV."""
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Download ligands (JSON: {pubchem_cid: SMILES})
     logger.info("Downloading Davis ligands...")
-    resp = requests.get(DAVIS_LIGANDS_URL, timeout=REQUEST_TIMEOUT_SEC)
-    resp.raise_for_status()
-    ligands: Dict[str, str] = json.loads(resp.text)
+    response = requests.get(DAVIS_LIGANDS_URL, timeout=REQUEST_TIMEOUT_SEC)
+    response.raise_for_status()
+    ligands: Dict[str, str] = json.loads(response.text)
     ligand_ids = list(ligands.keys())
     ligand_smiles = list(ligands.values())
     logger.info("  %d ligands loaded", len(ligand_ids))
 
-    # Download proteins (JSON: {gene_name: sequence})
     logger.info("Downloading Davis proteins...")
-    resp = requests.get(DAVIS_PROTEINS_URL, timeout=REQUEST_TIMEOUT_SEC)
-    resp.raise_for_status()
-    proteins: Dict[str, str] = json.loads(resp.text)
+    response = requests.get(DAVIS_PROTEINS_URL, timeout=REQUEST_TIMEOUT_SEC)
+    response.raise_for_status()
+    proteins: Dict[str, str] = json.loads(response.text)
     protein_ids = list(proteins.keys())
-    protein_seqs = list(proteins.values())
+    protein_sequences = list(proteins.values())
     logger.info("  %d proteins loaded", len(protein_ids))
 
-    # Download affinity matrix (numpy pickle from Python 2 era)
     logger.info("Downloading Davis affinity matrix...")
-    resp = requests.get(DAVIS_AFFINITY_URL, timeout=REQUEST_TIMEOUT_SEC)
-    resp.raise_for_status()
-    raw = pickle.loads(resp.content, encoding="latin1")
-    affinity_matrix = np.array(raw, dtype=np.float64)
+    response = requests.get(DAVIS_AFFINITY_URL, timeout=REQUEST_TIMEOUT_SEC)
+    response.raise_for_status()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        affinity_matrix = np.array(
+            pickle.loads(response.content, encoding="latin1"),
+            dtype=np.float64,
+        )
     logger.info("  Affinity matrix shape: %s", affinity_matrix.shape)
 
-    # Build flat DataFrame: one row per (ligand, protein, Kd)
     records: List[Dict[str, Any]] = []
-    for i, (lid, smi) in enumerate(zip(ligand_ids, ligand_smiles)):
-        for j, pid in enumerate(protein_ids):
-            kd = float(affinity_matrix[i, j])
+    for ligand_index, (ligand_id, smiles) in enumerate(zip(ligand_ids, ligand_smiles)):
+        for target_index, target_id in enumerate(protein_ids):
             records.append(
                 {
-                    "Drug_ID": lid,
-                    "Drug": smi,
-                    "Target_ID": pid,
-                    "Target": protein_seqs[j][:50],  # truncate for storage
-                    "Y": kd,
+                    "Drug_ID": ligand_id,
+                    "Drug": smiles,
+                    "Target_ID": target_id,
+                    "Target_Sequence": protein_sequences[target_index],
+                    "Y": float(affinity_matrix[ligand_index, target_index]),
                 }
             )
 
     df = pd.DataFrame(records)
-
-    # Save
     filepath = output_dir / "davis_dataset.csv"
     df.to_csv(filepath, index=False)
     logger.info("Davis dataset saved to %s (%d rows)", filepath, len(df))
 
-    # Also save raw files for reference
     with open(output_dir / "davis_ligands.json", "w") as fh:
         json.dump(ligands, fh, indent=2)
     with open(output_dir / "davis_proteins.json", "w") as fh:
         json.dump(proteins, fh, indent=2)
 
-    # Save download log
     log = {
         "timestamp": datetime.now().isoformat(),
         "source": "davis",
@@ -148,20 +130,13 @@ def download_davis(output_dir: Path = RAW_DIR) -> Path:
     return filepath
 
 
-# --- BindingDB API (alternative) ---
-
-
 def fetch_ligands_for_uniprot(
     uniprot_id: str,
     cutoff_nm: int = AFFINITY_CUTOFF_NM,
     timeout: int = REQUEST_TIMEOUT_SEC,
     max_retries: int = MAX_RETRIES,
 ) -> Optional[Dict[str, Any]]:
-    """Query BindingDB REST API for ligands binding a given UniProt target.
-
-    Note: This API endpoint may be intermittently unavailable.
-    Retries with exponential backoff on transient failures.
-    """
+    """Query BindingDB for ligands that bind a target UniProt identifier."""
     params = {
         "uniprot": uniprot_id,
         "cutoff": cutoff_nm,
@@ -171,33 +146,35 @@ def fetch_ligands_for_uniprot(
 
     for attempt in range(max_retries):
         try:
-            resp = requests.get(
-                BINDINGDB_API_URL, params=params, timeout=timeout
+            response = requests.get(
+                BINDINGDB_API_URL,
+                params=params,
+                timeout=timeout,
             )
-            if resp.status_code == 200:
-                return resp.json()
-            elif 400 <= resp.status_code < 500:
+            if response.status_code == 200:
+                return response.json()
+            if 400 <= response.status_code < 500:
                 logger.warning(
-                    "Client error %d for %s — skipping",
-                    resp.status_code,
+                    "Client error %d for %s; skipping target",
+                    response.status_code,
                     uniprot_id,
                 )
                 return None
-            else:
-                logger.warning(
-                    "Server error %d for %s, attempt %d/%d",
-                    resp.status_code,
-                    uniprot_id,
-                    attempt + 1,
-                    max_retries,
-                )
-        except (requests.ConnectionError, requests.Timeout) as exc:
+
             logger.warning(
-                "Network error for %s: %s, attempt %d/%d",
+                "Server error %d for %s on attempt %d/%d",
+                response.status_code,
                 uniprot_id,
-                exc,
                 attempt + 1,
                 max_retries,
+            )
+        except (requests.ConnectionError, requests.Timeout) as exc:
+            logger.warning(
+                "Network error for %s on attempt %d/%d: %s",
+                uniprot_id,
+                attempt + 1,
+                max_retries,
+                exc,
             )
 
         time.sleep(2 ** (attempt + 1))
@@ -211,11 +188,7 @@ def download_bindingdb(
     cutoff_nm: int = AFFINITY_CUTOFF_NM,
     output_dir: Path = RAW_DIR,
 ) -> Dict[str, Any]:
-    """Download binding data for kinase targets from BindingDB API.
-
-    Queries each target sequentially. Continues on failure for individual
-    targets. Returns a download log.
-    """
+    """Download a curated kinase panel from BindingDB."""
     output_dir.mkdir(parents=True, exist_ok=True)
     log: Dict[str, Any] = {
         "timestamp": datetime.now().isoformat(),
@@ -224,60 +197,50 @@ def download_bindingdb(
         "targets": {},
     }
 
-    for name, uid in targets.items():
-        logger.info("Fetching data for %s (%s)...", name, uid)
-        data = fetch_ligands_for_uniprot(uid, cutoff_nm=cutoff_nm)
+    for target_name, uniprot_id in targets.items():
+        logger.info("Fetching BindingDB data for %s (%s)...", target_name, uniprot_id)
+        data = fetch_ligands_for_uniprot(uniprot_id, cutoff_nm=cutoff_nm)
 
         if data is not None:
-            output_dir.mkdir(parents=True, exist_ok=True)
-            filepath = output_dir / f"bindingdb_{uid}.json"
+            filepath = output_dir / f"bindingdb_{uniprot_id}.json"
             with open(filepath, "w") as fh:
                 json.dump(data, fh, indent=2)
+
             count = len(data) if isinstance(data, list) else 1
-            log["targets"][name] = {
-                "uniprot_id": uid,
+            log["targets"][target_name] = {
+                "uniprot_id": uniprot_id,
                 "status": "success",
                 "file": str(filepath),
                 "ligand_count": count,
             }
-            logger.info("  -> Saved %d records to %s", count, filepath)
+            logger.info("  Saved %d records to %s", count, filepath)
         else:
-            log["targets"][name] = {
-                "uniprot_id": uid,
+            log["targets"][target_name] = {
+                "uniprot_id": uniprot_id,
                 "status": "failed",
                 "file": None,
                 "ligand_count": 0,
             }
-            logger.warning("  -> FAILED for %s", name)
+            logger.warning("  Failed for %s", target_name)
 
         time.sleep(2.0)
 
-    # Save log and metadata
-    log_path = output_dir / "download_log.json"
-    with open(log_path, "w") as fh:
+    with open(output_dir / "download_log.json", "w") as fh:
         json.dump(log, fh, indent=2)
 
-    targets_df = pd.DataFrame(
-        [{"kinase_name": k, "uniprot_id": v} for k, v in targets.items()]
-    )
-    targets_df.to_csv(output_dir / "kinase_targets.csv", index=False)
+    pd.DataFrame(
+        [{"kinase_name": name, "uniprot_id": uid} for name, uid in targets.items()]
+    ).to_csv(output_dir / "kinase_targets.csv", index=False)
 
     successes = sum(
-        1 for t in log["targets"].values() if t["status"] == "success"
+        1 for target in log["targets"].values() if target["status"] == "success"
     )
-    logger.info(
-        "Download complete: %d/%d targets succeeded", successes, len(targets)
-    )
+    logger.info("Download complete: %d/%d targets succeeded", successes, len(targets))
     return log
 
 
-# --- CLI ---
-
-
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Download kinase binding data"
-    )
+    parser = argparse.ArgumentParser(description="Download kinase binding data")
     parser.add_argument(
         "--source",
         choices=["davis", "bindingdb"],
@@ -299,7 +262,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
@@ -309,18 +272,14 @@ def main():
 
     if args.source == "davis":
         download_davis(output_dir=args.output_dir)
-    elif args.source == "bindingdb":
-        log = download_bindingdb(
-            cutoff_nm=args.cutoff, output_dir=args.output_dir
+        return
+
+    log = download_bindingdb(cutoff_nm=args.cutoff, output_dir=args.output_dir)
+    if all(target["status"] == "failed" for target in log["targets"].values()):
+        logger.error(
+            "All BindingDB queries failed. Use the Davis dataset instead:\n"
+            "  python scripts/download_data.py --source davis"
         )
-        all_failed = all(
-            t["status"] == "failed" for t in log["targets"].values()
-        )
-        if all_failed:
-            logger.error(
-                "All BindingDB queries failed. Use the Davis dataset instead:\n"
-                "  python scripts/download_data.py --source davis"
-            )
 
 
 if __name__ == "__main__":

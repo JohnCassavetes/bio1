@@ -12,6 +12,9 @@
     "duplicate_groups": 0,
     "after_dedup": 30056
   },
+  "affinity_type_counts": {
+    "KD": 30056
+  },
   "split_stats": {
     "train_rows": 21080,
     "val_rows": 4556,

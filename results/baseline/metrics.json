@@ -1,0 +1,53 @@
+{
+  "model": {
+    "type": "ridge_ensemble",
+    "selected_alpha": 10.0,
+    "ensemble_size": 8,
+    "bootstrap_fraction": 0.8,
+    "fingerprint_bits": 1024,
+    "fingerprint_radius": 2,
+    "uncertainty_scale": 18.933811
+  },
+  "validation_model_selection": [
+    {
+      "alpha": 0.1,
+      "val_rmse": 0.8111
+    },
+    {
+      "alpha": 1.0,
+      "val_rmse": 0.811101
+    },
+    {
+      "alpha": 10.0,
+      "val_rmse": 0.811105
+    },
+    {
+      "alpha": 100.0,
+      "val_rmse": 0.811143
+    }
+  ],
+  "train_val": {
+    "rows": 25636,
+    "targets": 377,
+    "rmse": 0.769332,
+    "spearman": 0.496851,
+    "roc_auc": 0.816696,
+    "prediction_interval_95_coverage": 0.953581,
+    "mean_prediction_std": 0.819442,
+    "mean_per_target_spearman": 0.495054,
+    "mean_top_10pct_enrichment": 3.684797,
+    "mean_per_target_roc_auc": 0.823998
+  },
+  "test": {
+    "rows": 4420,
+    "targets": 65,
+    "rmse": 0.778947,
+    "spearman": 0.453525,
+    "roc_auc": 0.796891,
+    "prediction_interval_95_coverage": 0.952489,
+    "mean_prediction_std": 0.838239,
+    "mean_per_target_spearman": 0.465384,
+    "mean_top_10pct_enrichment": 3.423712,
+    "mean_per_target_roc_auc": 0.802971
+  }
+}

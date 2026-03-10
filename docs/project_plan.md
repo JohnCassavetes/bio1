@@ -1,128 +1,86 @@
-# Kinase Ligand Ranking Pipeline - Project Plan
+# Project Plan And Status
 
-## 1. Problem Statement
+## Current Status
 
-Given a kinase protein target and a set of candidate small molecules, predict
-binding affinity (pIC50) and rank molecules by predicted potency. Include
-uncertainty estimates so researchers know which predictions to trust.
+The repository now has a complete baseline workflow:
 
-This is a **candidate prioritization** tool, not a drug discovery claim.
+1. `scripts/download_data.py` downloads the Davis kinase dataset
+2. `scripts/process_dataset.py` normalizes affinity data into a reusable schema
+3. `scripts/train_baseline.py` trains and evaluates a target-aware baseline
+4. `scripts/predict_rank.py` scores new ligand-target pairs
 
-## 2. Dataset Description
+Implemented outputs include:
 
-### 2.1 Primary Source: BindingDB
+- processed train/validation/test CSV files
+- saved model artifact in `models/baseline/`
+- evaluation reports in `results/baseline/`
+- smoke-tested inference path
 
-- **API**: REST endpoint `getLigandsByUniprots`
-- **URL**: https://bindingdb.org/axis2/services/BDBService/getLigandsByUniprots
-- **Targets**: 8 well-studied kinases (EGFR, ABL1, CDK2, BRAF, SRC, VEGFR2, JAK2, Aurora A)
-- **Measurement types**: IC50, Ki, Kd (nanomolar)
-- **Affinity cutoff**: 10,000 nM (10 uM)
-- **Expected size**: ~5,000-20,000 measurements depending on target
+## Design Decisions
 
-### 2.2 Fallback Source: Davis Kinase Dataset
+### 1. Generic Target Variable
 
-- **Source**: Therapeutics Data Commons (TDC)
-- **Content**: 442 kinases x 68 ligands, Kd measurements
-- **Size**: ~25,772 drug-target pairs
-- **Reference**: Davis et al., Nature Biotechnology 29, 1046-1051 (2011)
+The project uses `p_activity = -log10(affinity in molar units)` as the modeling
+target and preserves the original assay family in `affinity_type`.
 
-### 2.3 Data Processing Pipeline
+Reason:
 
-```
-Raw data (JSON/CSV)
-    |
-    v
-Filter (exact measurements, valid SMILES, affinity range 0.01 nM - 1 mM)
-    |
-    v
-Canonicalize SMILES (RDKit)
-    |
-    v
-Deduplicate (geometric mean aggregation)
-    |
-    v
-Convert to pIC50 (-log10 of IC50 in molar)
-    |
-    v
-Split by protein target (70/15/15 train/val/test)
-```
+- `pIC50` is only correct for `IC50`
+- the Davis dataset is `Kd`
+- mixed assay projects should not hide the assay label
 
-### 2.4 Key Design Decisions
+### 2. Split By Target
 
-1. **Split by target, not random**: Prevents data leakage. Tests generalization
-   to unseen kinases rather than memorization of known ligand-target pairs.
+All rows for a target go into exactly one split.
 
-2. **Geometric mean for aggregation**: Affinity measurements are log-normally
-   distributed, so geometric mean is the appropriate central tendency.
+Reason:
 
-3. **pIC50 scale**: -log10(IC50 in M). Higher = more potent. Converts
-   multiplicative relationships to additive, better for regression models.
+- random ligand-target splits inflate apparent generalization
+- the project goal is ranking on unseen kinase targets
 
-4. **Canonical SMILES**: Ensures same molecule always has the same string
-   representation regardless of how it was drawn or encoded.
+### 3. Sequence-Aware Baseline
 
-## 3. Pipeline Phases
+The baseline uses ligand fingerprints plus protein-sequence composition
+features rather than target one-hot encodings.
 
-### Phase 1: Repository Setup (complete)
-- Directory structure, dependencies, documentation
+Reason:
 
-### Phase 2: Data Acquisition (complete)
-- `scripts/download_data.py`: Fetch from BindingDB API or Davis via TDC
-- `scripts/process_dataset.py`: Clean, filter, deduplicate, split
+- one-hot target IDs break on unseen targets
+- sequence-derived features support target-level generalization
 
-### Phase 3: Feature Engineering
-- Molecular fingerprints (Morgan/ECFP via RDKit, radius=2, 1024 bits)
-- Molecular graphs for GNN (atom features + bond features via RDKit)
-- Protein features (learnable kinase embeddings or pre-computed ESM-2)
+### 4. Calibrated Uncertainty
 
-### Phase 4: Model Training
-- Baseline: MLP on Morgan fingerprints + kinase embedding
-- GNN: AttentiveFP or GCN on molecular graphs + kinase embedding
-- Loss: MSE on pIC50
+Bootstrap ensemble variance is scaled using the validation split so prediction
+interval coverage is meaningful.
 
-### Phase 5: Ligand Ranking
-- Predict pIC50 for all candidate ligands against a target kinase
-- Sort by predicted score (descending = most potent first)
+Reason:
 
-### Phase 6: Uncertainty Estimation
-- Monte Carlo dropout: run N forward passes with dropout active at inference
-- Compute mean prediction and standard deviation per ligand
-- Output: predicted pIC50, uncertainty (std), confidence interval
+- raw ensemble spread was under-dispersed
+- the project explicitly claims uncertainty-aware ranking
 
-### Phase 7: Evaluation
-- Spearman rank correlation (primary ranking metric)
-- Top-k enrichment factor (virtual screening performance)
-- ROC-AUC (active vs. inactive discrimination)
-- RMSE on pIC50 (regression accuracy)
-- Generate plots: predicted vs. actual, uncertainty calibration, enrichment curves
+## Near-Term Work
 
-### Phase 8: Documentation
-- Methodology description in `docs/methodology.md`
-- Results summary in `paper/draft.md`
-- Updated README with final instructions
+### Phase 1: Stronger Baselines
 
-## 4. Evaluation Metrics
+- add tree-based and shallow neural baselines
+- compare RMSE, Spearman, ROC-AUC, and enrichment
 
-| Metric | Purpose | Target |
-|--------|---------|--------|
-| Spearman rho | Rank correlation | > 0.5 |
-| Top-10% enrichment | Active compounds in top predictions | > 2x random |
-| ROC-AUC | Active/inactive discrimination | > 0.7 |
-| RMSE (pIC50) | Prediction accuracy | < 1.5 |
+### Phase 2: Better Protein Features
 
-## 5. Tools and Dependencies
+- replace amino-acid composition with pretrained embeddings
+- compare sequence truncation vs full-sequence embeddings
 
-- **RDKit**: Molecule parsing, validation, fingerprints, graph features
-- **PyTorch**: Model training and MC dropout inference
-- **PyTorch Geometric**: Graph neural network layers
-- **pandas/numpy/scipy**: Data processing and metrics
-- **scikit-learn**: Train/test utilities and additional metrics
-- **matplotlib/seaborn**: Visualization
+### Phase 3: Better Chemistry Features
 
-## 6. References
+- compare ECFP variants and count fingerprints
+- add graph-based ligand encoders
 
-- BindingDB: Liu et al., Nucleic Acids Research (2007)
-- Davis dataset: Davis et al., Nature Biotechnology 29, 1046-1051 (2011)
-- MC Dropout: Gal & Ghahramani, ICML (2016)
-- AttentiveFP: Xiong et al., Journal of Medicinal Chemistry (2020)
-- Morgan fingerprints: Rogers & Hahn, Journal of Chemical Information and Modeling (2010)
+### Phase 4: Experiment Management
+
+- add run manifests and parameterized output folders
+- record dataset hashes and config files with each run
+
+### Phase 5: External Data Expansion
+
+- validate BindingDB ingestion against current live API responses
+- add source-specific schema tests before merging datasets
