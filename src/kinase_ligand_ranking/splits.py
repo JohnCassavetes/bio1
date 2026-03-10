@@ -75,6 +75,12 @@ def generate_split_bundle(
             random_seed=random_seed,
         )
         grouping = "target_id+smiles"
+    elif split_type == "mutation_holdout":
+        assignment = _mutation_holdout_assignment(
+            df,
+            random_seed=random_seed,
+        )
+        grouping = "mutation_family"
     else:
         raise ValueError(f"Unsupported split type: {split_type}")
 
@@ -111,6 +117,15 @@ def smiles_to_scaffold(smiles: str) -> str:
     if scaffold is None or scaffold.GetNumAtoms() == 0:
         return smiles
     return Chem.MolToSmiles(scaffold)
+
+
+def target_family(target_id: str, known_targets: Iterable[str] | None = None) -> str:
+    """Normalize a target ID to its base family/wild-type name."""
+    target_id = str(target_id)
+    family = target_id.split("(")[0]
+    if known_targets is not None and family.endswith("p") and family[:-1] in set(known_targets):
+        family = family[:-1]
+    return family
 
 
 def _random_row_assignment(
@@ -197,4 +212,42 @@ def _both_new_assignment(
     # Rows falling into mixed quadrants are excluded so the test split remains
     # strictly both-new.
     assignment = assignment.fillna("discard")
+    return assignment
+
+
+def _mutation_holdout_assignment(
+    df: pd.DataFrame,
+    *,
+    random_seed: int,
+) -> pd.Series:
+    known_targets = set(df["target_id"].astype(str).unique())
+    mutation_df = df.copy()
+    mutation_df["target_family"] = mutation_df["target_id"].apply(
+        lambda value: target_family(value, known_targets=known_targets)
+    )
+    mutation_df["is_variant"] = mutation_df["target_id"] != mutation_df["target_family"]
+
+    family_stats = mutation_df.groupby("target_family").agg(
+        has_wildtype=("is_variant", lambda values: bool((~values).any())),
+        has_variant=("is_variant", lambda values: bool(values.any())),
+    )
+    candidate_families = set(
+        family_stats[(family_stats["has_wildtype"]) & (family_stats["has_variant"])].index
+    )
+
+    assignment = pd.Series("train", index=df.index, dtype="object")
+    candidate_variant_rows = mutation_df[
+        mutation_df["is_variant"] & mutation_df["target_family"].isin(candidate_families)
+    ]
+    if candidate_variant_rows.empty:
+        return assignment
+
+    variant_assignment = _group_assignment(
+        candidate_variant_rows,
+        group_column="target_family",
+        train_frac=0.0,
+        val_frac=0.5,
+        random_seed=random_seed,
+    )
+    assignment.loc[candidate_variant_rows.index] = variant_assignment.values
     return assignment

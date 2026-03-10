@@ -1,0 +1,49 @@
+{
+  "active_threshold": 6.0,
+  "alphas": [
+    0.1,
+    0.05
+  ],
+  "methods": {
+    "0.1": {
+      "split_conformal": {
+        "quantile": 1.2391433999999997,
+        "coverage": 0.9104072398190045,
+        "mean_interval_width": 2.4782868,
+        "certain_active_fraction": 0.005429864253393665,
+        "certain_inactive_fraction": 0.0029411764705882353,
+        "uncertain_fraction": 0.9916289592760181,
+        "certain_active_precision": 0.9166666666666666
+      },
+      "normalized_conformal": {
+        "quantile": 1.2121390667924552,
+        "coverage": 0.8952488687782806,
+        "mean_interval_width": 2.032125568394373,
+        "certain_active_fraction": 0.009728506787330317,
+        "certain_inactive_fraction": 0.29479638009049774,
+        "uncertain_fraction": 0.6954751131221719,
+        "certain_active_precision": 0.813953488372093
+      }
+    },
+    "0.05": {
+      "split_conformal": {
+        "quantile": 1.8178351683184255,
+        "coverage": 0.9579185520361991,
+        "mean_interval_width": 3.63567033663685,
+        "certain_active_fraction": 0.0,
+        "certain_inactive_fraction": 0.0,
+        "uncertain_fraction": 1.0,
+        "certain_active_precision": null
+      },
+      "normalized_conformal": {
+        "quantile": 1.9618548028073595,
+        "coverage": 0.9524886877828054,
+        "mean_interval_width": 3.2890081802344477,
+        "certain_active_fraction": 0.0011312217194570137,
+        "certain_inactive_fraction": 0.09547511312217194,
+        "uncertain_fraction": 0.903393665158371,
+        "certain_active_precision": 0.8
+      }
+    }
+  }
+}

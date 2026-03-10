@@ -9,19 +9,21 @@ semantics, and say little about whether a model helps a scientist choose which
 compounds to test under a fixed experimental budget. We present **KinBench-UQ**,
 a benchmark and evaluation framework for kinase affinity prediction that centers
 realistic generalization, calibration, and decision utility. KinBench-UQ keeps
-assay types explicit, uses target-held-out evaluation as the default setting,
-and reports both predictive metrics and budget-constrained prioritization
-metrics. As an initial baseline, we implement a target-aware ridge-ensemble
-model using ligand fingerprints and protein-sequence features, together with
-validation-calibrated uncertainty. On the Davis kinase dataset, the baseline
-achieves a held-out test RMSE of `0.779`, global Spearman correlation of
-`0.454`, mean top-10% enrichment of `3.424x`, and calibrated 95% interval
-coverage of `0.952`. Under fixed assay budgets of 1, 3, 5, and 10 compounds per
-target, mean-only ranking remains the strongest policy among the currently
-implemented policies, while predicted uncertainty is still informative about
-error (Spearman `0.431` between predictive standard deviation and absolute
-error). These results motivate KinBench-UQ as a benchmark for realistic kinase
-screening rather than another optimistic affinity leaderboard.
+assay types explicit and implements multiple split families, including
+ligand-held-out, scaffold-based, both-new, and mutation-holdout evaluation. As
+comparison models, we implement ligand-only ridge, ligand-plus-target ridge, and
+an interaction-aware projected cross-feature ensemble with calibrated
+uncertainty. On Davis, the harsher split families substantially change the
+conclusions suggested by standard evaluation: for the ridge ensemble, RMSE rises
+from `0.768` on random splits to `0.814` on scaffold splits and `0.812` on
+both-new splits. On the mutation-holdout benchmark, the interaction-aware model
+substantially outperforms the ridge baselines, reaching RMSE `0.545`, Spearman
+`0.818`, and ROC-AUC `0.971`. We also show that uncertainty is informative about
+error but does not automatically improve ranking under naive risk-adjusted
+selection, motivating conformal and selective evaluation alongside classical
+predictive metrics. These results position KinBench-UQ as a benchmark for
+realistic kinase prioritization rather than another optimistic affinity
+leaderboard.
 
 ## 1. Introduction
 
@@ -48,7 +50,9 @@ that conventional protocols can be misleading. A 2025 conformal-prediction
 study for DTI shows that uncertainty estimation is an active area, but it does
 not solve the kinase-specific benchmark problem by itself. A 2025
 modification-aware DAVIS benchmark further highlights that even standard kinase
-datasets still admit more realistic problem formulations.
+datasets still admit more realistic problem formulations. KinBench-UQ is aimed
+at the overlap of those concerns: kinase realism, calibrated uncertainty, and
+budgeted prioritization.
 
 This paper positions KinBench-UQ as a benchmark and evaluation contribution
 with a stronger interaction-aware baseline rather than as a pure architecture
@@ -111,6 +115,7 @@ dataset together with multiple split families:
 - interactions: 30,056
 - assay family: `Kd`
 - splits: random, cold-target, cold-ligand, scaffold, and both-new
+- mutation-aware split: mutation-holdout evaluation from wild-type to variant targets
 
 The pipeline preserves:
 
@@ -184,6 +189,7 @@ For assay budgets of 1, 3, 5, and 10 compounds per target:
 - calibrated 95% interval coverage
 - mean predictive standard deviation
 - Spearman correlation between predictive standard deviation and absolute error
+- split-conformal and normalized-conformal interval quality
 
 ## 6. Current Results
 
@@ -202,6 +208,14 @@ For the ridge ensemble:
 This reveals an important benchmark insight: on Davis, target-held-out is not
 automatically the harshest evaluation. Ligand-generalization and both-new
 settings are substantially harder for the ridge baselines.
+
+### 6.1b Mutation-Transfer Split
+
+We additionally construct a mutation-holdout benchmark in which wild-type target
+families remain available for training while mutant variants are reserved for
+validation and test. This setting is scientifically meaningful for kinases
+because clinically relevant resistance variants are common and often drive
+screening decisions.
 
 ### 6.2 Stronger Interaction-Aware Model
 
@@ -242,6 +256,17 @@ ranking do not improve hit rate on this split. This is a meaningful result:
 calibrated uncertainty does **not** automatically translate into better
 selection policy.
 
+### 6.4b Conformal Evaluation
+
+Conformal evaluation makes the uncertainty story sharper. On the original
+baseline workflow, normalized conformal intervals achieve:
+
+- `alpha = 0.10`: coverage `0.895`, mean width `2.032`
+- `alpha = 0.05`: coverage `0.952`, mean width `3.289`
+
+This makes it possible to report explicit abstention and decision regions rather
+than only raw predictive standard deviations.
+
 ### 6.5 Why Uncertainty Still Matters
 
 Even though the simple uncertainty-aware policies do not yet outperform mean
@@ -270,6 +295,8 @@ Instead, the current contribution is:
 - comparison-ready baseline models
 - an uncertainty-calibrated interaction-aware model that improves on the ridge
   baselines in the currently run settings
+- a mutation-transfer benchmark that is much harder for the ridge baselines and
+  more relevant to kinase screening than generic random splits
 - an honest demonstration that uncertainty is informative, but that naive
   uncertainty-aware policies do not automatically outperform mean ranking
 

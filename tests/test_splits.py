@@ -47,6 +47,27 @@ class SplitGenerationTestCase(unittest.TestCase):
             len(self.df),
         )
 
+    def test_mutation_holdout_keeps_wildtype_train_and_variants_eval(self):
+        df = pd.DataFrame(
+            {
+                "smiles": ["A", "A", "B", "B"],
+                "target_id": ["EGFR", "EGFR(T790M)", "ABL1", "ABL1(T315I)"],
+                "target_label": ["EGFR", "EGFR(T790M)", "ABL1", "ABL1(T315I)"],
+                "target_sequence": ["AAAA", "AAAA", "BBBB", "BBBB"],
+                "affinity_type": ["KD"] * 4,
+                "activity_label": ["pKd"] * 4,
+                "affinity_nm": [1.0] * 4,
+                "p_activity": [8.0, 7.0, 8.0, 6.0],
+                "measurement_count": [1] * 4,
+                "source": ["davis"] * 4,
+            }
+        )
+        bundle = generate_split_bundle(df, split_type="mutation_holdout", random_seed=7)
+        self.assertTrue((bundle.train_df["target_id"].isin(["EGFR", "ABL1"])).all())
+        self.assertTrue(
+            set(bundle.val_df["target_id"]).union(set(bundle.test_df["target_id"])) <= {"EGFR(T790M)", "ABL1(T315I)"}
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

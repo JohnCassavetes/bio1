@@ -78,5 +78,21 @@
     "train_ligands": 48,
     "val_ligands": 11,
     "test_ligands": 9
+  },
+  "mutation_holdout": {
+    "split_type": "mutation_holdout",
+    "grouping": "mutation_family",
+    "random_seed": 42,
+    "retained_rows": 30056,
+    "discarded_rows": 0,
+    "train_rows": 26316,
+    "val_rows": 1972,
+    "test_rows": 1768,
+    "train_targets": 387,
+    "val_targets": 29,
+    "test_targets": 26,
+    "train_ligands": 68,
+    "val_ligands": 68,
+    "test_ligands": 68
   }
 }

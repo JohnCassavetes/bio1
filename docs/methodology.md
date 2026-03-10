@@ -83,8 +83,11 @@ Implemented policies:
 - mean-only ranking
 - probability-of-activity ranking
 - risk-adjusted ranking with validation-tuned `mean - lambda * std`
+- split-conformal and normalized-conformal uncertainty intervals
 
 Outputs are written to:
 
 - `results/baseline/budget_policy_metrics.csv`
 - `results/baseline/budget_policy_metrics.json`
+- `results/baseline/conformal_metrics.csv`
+- `results/baseline/conformal_metrics.json`

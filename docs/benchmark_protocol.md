@@ -43,11 +43,12 @@ The repository now generates:
 4. both-new split
 5. ligand-similarity-aware split
    implemented here as scaffold-based ligand grouping
+6. mutation-holdout split
 
 Still planned:
 
 1. target-sequence-identity-aware split
-2. mutation-aware split
+2. external-source time-aware validation
 
 ## Core Metrics
 
@@ -73,6 +74,7 @@ For budgets such as `1`, `3`, `5`, and `10` compounds per target:
 - mean predicted standard deviation
 - rank correlation between predicted uncertainty and empirical error
 - selective-performance diagnostics
+- split-conformal and normalized-conformal interval quality
 
 ## Policy Evaluation
 

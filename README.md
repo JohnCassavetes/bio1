@@ -1,4 +1,4 @@
-# Kinase Ligand Ranking Baseline
+# KinBench-UQ
 
 Target-aware baseline pipeline for ranking small-molecule ligands against kinase
 targets by predicted binding strength. The repository now runs end to end:
@@ -57,6 +57,7 @@ bio1/
     train_baseline.py
     predict_rank.py
     evaluate_budgeted_policies.py
+    evaluate_conformal.py
     run_benchmark_suite.py
   src/kinase_ligand_ranking/
   tests/
@@ -82,11 +83,17 @@ python scripts/train_baseline.py
 # 5. Evaluate budget-constrained decision policies
 python scripts/evaluate_budgeted_policies.py
 
-# 6. Run comparison suites across split families
+# 6. Evaluate split-conformal uncertainty
+python scripts/evaluate_conformal.py
+
+# 7. Run comparison suites across split families
 python scripts/run_benchmark_suite.py --models ligand_only_ridge ridge_ensemble
 python scripts/run_benchmark_suite.py --models dual_tower_uq --splits random cold_target
 
-# 7. Score new ligand-target pairs
+# 8. Run mutation-transfer benchmark
+python scripts/run_benchmark_suite.py --splits mutation_holdout --models ligand_only_ridge ridge_ensemble dual_tower_uq
+
+# 9. Score new ligand-target pairs
 python scripts/predict_rank.py --input path/to/candidates.csv
 ```
 
@@ -158,10 +165,17 @@ risk-adjusted selection policy does not yet beat mean-only ranking on the Davis
 test split. That is now part of the benchmark story rather than something being
 hidden.
 
+Conformal uncertainty results from [conformal_metrics.json](/Users/a/Desktop/bio1/results/baseline/conformal_metrics.json):
+
+- normalized conformal at `alpha=0.10`: coverage `0.895`, mean width `2.032`
+- normalized conformal at `alpha=0.05`: coverage `0.952`, mean width `3.289`
+- at `alpha=0.10`, the model abstains on about `69.5%` of cases while making a large confident-inactive region
+
 Benchmark comparison results:
 
 - ridge baselines across `random`, `cold_target`, `cold_ligand`, `scaffold`, and `both_new` are summarized in [results/benchmark_ridge/summary.csv](/Users/a/Desktop/bio1/results/benchmark_ridge/summary.csv)
 - the interaction-aware `dual_tower_uq` model is summarized in [results/benchmark_dual_tower/summary.csv](/Users/a/Desktop/bio1/results/benchmark_dual_tower/summary.csv)
+- the mutation-transfer benchmark is summarized in [results/benchmark_mutation/summary.csv](/Users/a/Desktop/bio1/results/benchmark_mutation/summary.csv)
 - the split manifests live in [data/benchmark/manifest.json](/Users/a/Desktop/bio1/data/benchmark/manifest.json)
 
 Current takeaways:
@@ -169,6 +183,7 @@ Current takeaways:
 - ligand/scaffold/both-new splits are materially harsher than random splits for the ridge baselines
 - target-held-out is not automatically the hardest split on Davis
 - the interaction-aware model materially outperforms the ridge baselines on the currently run `random` and `cold_target` splits
+- on the new `mutation_holdout` split, `dual_tower_uq` is much stronger than the ridge baselines
 
 ## Inference Input Format
 

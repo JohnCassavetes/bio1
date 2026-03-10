@@ -36,7 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--splits",
         nargs="+",
-        default=["random", "cold_target", "cold_ligand", "scaffold", "both_new"],
+        default=["random", "cold_target", "cold_ligand", "scaffold", "both_new", "mutation_holdout"],
     )
     parser.add_argument("--seed", type=int, default=42)
     return parser.parse_args()
