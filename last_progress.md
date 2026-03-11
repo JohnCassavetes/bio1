@@ -1,0 +1,7 @@
+We turned the repo from “a solid baseline project” into “a much more serious benchmark system.” Before, it mainly showed that one target-aware model could run end to end on Davis. Now it also tests harder and more realistic settings, checks whether the model is seeing targets that are still too similar to training data, evaluates transfer to mutant families, and measures how well the same training setup works on outside data.
+
+A simple CS way to say it is: we upgraded it from a single in-distribution experiment into a fuller evaluation harness. It now has stricter splits, external testing, richer analysis outputs, generated figures/tables, and a reproducible pipeline. That makes the project much stronger as a research artifact, because the claims are tied to files the code actually produces.
+
+It is publishable in the sense that the core idea is strong enough for a real paper: realistic evaluation for kinase-ligand prioritization, not just leaderboard RMSE. The repo-native results now support that story much better than before.
+
+The one major missing piece for a stronger paper is the full rerun of the exact DeepDTA and GraphDTA literature baselines under this protocol. The code is in place, but those result files still need to be fully generated and frozen. So the project is now much closer to paper-ready, but not yet at the strongest possible claim until those comparison runs are finished.
