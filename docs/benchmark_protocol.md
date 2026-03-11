@@ -24,9 +24,8 @@ benchmarks.
 
 ## Current Split
 
-The current implemented split is:
-
-- target-held-out train/validation/test split
+The current benchmark now treats `cold_target` as the baseline in-domain split,
+but it is no longer the only realistic setting.
 
 Rationale:
 
@@ -43,12 +42,13 @@ The repository now generates:
 4. both-new split
 5. ligand-similarity-aware split
    implemented here as scaffold-based ligand grouping
-6. mutation-holdout split
+6. target-sequence-identity-aware split
+   implemented via exact global pairwise alignment identity clustering
+7. mutation-holdout split
 
-Still planned:
+External validation:
 
-1. target-sequence-identity-aware split
-2. external-source time-aware validation
+1. train on Davis, validate on Davis validation, test on processed BindingDB kinase panel
 
 ## Core Metrics
 
@@ -89,6 +89,8 @@ The repo also supports comparison models:
 - `ligand_only_ridge`
 - `ridge_ensemble`
 - `dual_tower_uq`
+- `deepdta_exact`
+- `graphdta_gcn_exact`
 
 The main lesson from the initial baseline is that calibrated uncertainty can be
 informative without automatically yielding a better decision policy. That is why

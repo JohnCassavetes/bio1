@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem.Scaffolds import MurckoScaffold
+
+from kinase_ligand_ranking.sequence_identity import (
+    SequenceIdentityConfig,
+    cluster_targets_by_identity,
+    compute_identity_table,
+)
 
 
 @dataclass
@@ -17,6 +23,7 @@ class SplitBundle:
     val_df: pd.DataFrame
     test_df: pd.DataFrame
     manifest: Dict[str, object]
+    artifacts: Optional[Dict[str, pd.DataFrame]] = None
 
 
 def generate_split_bundle(
@@ -26,9 +33,13 @@ def generate_split_bundle(
     train_frac: float = 0.7,
     val_frac: float = 0.15,
     random_seed: int = 42,
+    sequence_identity_threshold: float = 0.6,
+    sequence_kmer_size: int = 3,
 ) -> SplitBundle:
     """Generate a train/val/test split bundle for a named strategy."""
     split_type = split_type.lower()
+    extra_manifest: Dict[str, object] = {}
+    artifacts: Dict[str, pd.DataFrame] = {}
     if split_type == "random":
         assignment = _random_row_assignment(
             df,
@@ -81,6 +92,16 @@ def generate_split_bundle(
             random_seed=random_seed,
         )
         grouping = "mutation_family"
+    elif split_type == "sequence_identity":
+        assignment, extra_manifest, artifacts = _sequence_identity_assignment(
+            df,
+            train_frac=train_frac,
+            val_frac=val_frac,
+            random_seed=random_seed,
+            identity_threshold=sequence_identity_threshold,
+            kmer_size=sequence_kmer_size,
+        )
+        grouping = "sequence_identity_cluster"
     else:
         raise ValueError(f"Unsupported split type: {split_type}")
 
@@ -105,7 +126,14 @@ def generate_split_bundle(
         "val_ligands": int(val_df["smiles"].nunique()),
         "test_ligands": int(test_df["smiles"].nunique()),
     }
-    return SplitBundle(train_df=train_df, val_df=val_df, test_df=test_df, manifest=manifest)
+    manifest.update(extra_manifest)
+    return SplitBundle(
+        train_df=train_df,
+        val_df=val_df,
+        test_df=test_df,
+        manifest=manifest,
+        artifacts=artifacts or None,
+    )
 
 
 def smiles_to_scaffold(smiles: str) -> str:
@@ -251,3 +279,53 @@ def _mutation_holdout_assignment(
     )
     assignment.loc[candidate_variant_rows.index] = variant_assignment.values
     return assignment
+
+
+def _sequence_identity_assignment(
+    df: pd.DataFrame,
+    *,
+    train_frac: float,
+    val_frac: float,
+    random_seed: int,
+    identity_threshold: float,
+    kmer_size: int,
+) -> Tuple[pd.Series, Dict[str, object], Dict[str, pd.DataFrame]]:
+    target_rows = (
+        df[["target_id", "target_sequence"]]
+        .drop_duplicates(subset=["target_id"])
+        .assign(target_sequence=lambda frame: frame["target_sequence"].fillna("").astype(str))
+    )
+
+    identity_config = SequenceIdentityConfig(threshold=identity_threshold)
+    identity_table = compute_identity_table(target_rows, config=identity_config)
+    cluster_table = cluster_targets_by_identity(identity_table, threshold=identity_threshold)
+    cluster_map = dict(
+        zip(
+            cluster_table["target_id"].astype(str),
+            cluster_table["sequence_identity_cluster"].astype(str),
+        )
+    )
+
+    cluster_df = df.copy()
+    cluster_df["sequence_identity_cluster"] = cluster_df["target_id"].map(cluster_map)
+    assignment = _group_assignment(
+        cluster_df,
+        group_column="sequence_identity_cluster",
+        train_frac=train_frac,
+        val_frac=val_frac,
+        random_seed=random_seed,
+    )
+    manifest = {
+        "sequence_identity_threshold": float(identity_threshold),
+        "sequence_identity_metric": "global_alignment_percent_identity",
+        "sequence_identity_gap_open": float(identity_config.gap_open),
+        "sequence_identity_gap_extend": float(identity_config.gap_extend),
+        "sequence_identity_cluster_count": int(cluster_table["sequence_identity_cluster"].nunique()),
+        "largest_sequence_identity_cluster": int(
+            cluster_table.groupby("sequence_identity_cluster").size().max()
+        ),
+    }
+    return assignment, manifest, {
+        "target_sequence_identity": identity_table,
+        "target_sequence_identity_clusters": cluster_table,
+    }

@@ -1,0 +1,8 @@
+split,test_targets,mean_nearest_train_identity,median_nearest_train_identity,max_nearest_train_identity
+both_new,65,0.5712200624149415,0.5319444444444444,1.0
+cold_ligand,442,1.0,1.0,1.0
+cold_target,65,0.5712200624149415,0.5319444444444444,1.0
+mutation_holdout,26,1.0,1.0,1.0
+random,442,1.0,1.0,1.0
+scaffold,442,1.0,1.0,1.0
+sequence_identity,59,0.3665525135549268,0.3914807302231237,0.5813586097946287

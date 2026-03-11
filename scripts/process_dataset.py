@@ -45,13 +45,19 @@ def load_bindingdb_json_files(raw_dir: Path = RAW_DIR) -> pd.DataFrame:
     if not json_files:
         raise FileNotFoundError(f"No bindingdb_*.json files found in {raw_dir}")
 
+    metadata_path = raw_dir / "bindingdb_target_metadata.json"
+    target_metadata: Dict[str, Dict[str, Any]] = {}
+    if metadata_path.exists():
+        with open(metadata_path) as fh:
+            target_metadata = json.load(fh)
+
     all_records: List[Dict[str, Any]] = []
     for json_file in json_files:
         target_id = json_file.stem.replace("bindingdb_", "")
         with open(json_file) as fh:
             data = json.load(fh)
 
-        records = _parse_bindingdb_response(data, target_id)
+        records = _parse_bindingdb_response(data, target_id, target_metadata.get(target_id, {}))
         all_records.extend(records)
         logger.info("Loaded %d records from %s", len(records), json_file.name)
 
@@ -60,12 +66,24 @@ def load_bindingdb_json_files(raw_dir: Path = RAW_DIR) -> pd.DataFrame:
     return df
 
 
-def _parse_bindingdb_response(data: Any, target_id: str) -> List[Dict[str, Any]]:
+def _parse_bindingdb_response(
+    data: Any,
+    target_id: str,
+    target_metadata: Optional[Dict[str, Any]] = None,
+) -> List[Dict[str, Any]]:
     """Parse a single BindingDB JSON response into flat records."""
     records: List[Dict[str, Any]] = []
+    target_metadata = target_metadata or {}
 
     if isinstance(data, dict):
-        entries = data.get("affinities", data.get("data", [data]))
+        entries = (
+            data.get("affinities")
+            or data.get("data")
+            or data.get("bindingdb")
+            or data.get("getLigandsByUniprotsResponse", {}).get("affinities")
+            or data.get("getLindsByUniprotsResponse", {}).get("affinities")
+            or [data]
+        )
     elif isinstance(data, list):
         entries = data
     else:
@@ -78,6 +96,7 @@ def _parse_bindingdb_response(data: Any, target_id: str) -> List[Dict[str, Any]]
 
         smiles = (
             entry.get("smiles")
+            or entry.get("smile")
             or entry.get("ligand_smiles")
             or entry.get("Ligand SMILES")
         )
@@ -93,8 +112,10 @@ def _parse_bindingdb_response(data: Any, target_id: str) -> List[Dict[str, Any]]
         )
         target_label = (
             entry.get("target_name")
+            or entry.get("query")
             or entry.get("Target Name")
             or entry.get("target")
+            or target_metadata.get("target_name")
             or target_id
         )
 
@@ -107,7 +128,7 @@ def _parse_bindingdb_response(data: Any, target_id: str) -> List[Dict[str, Any]]
                     "smiles": str(smiles),
                     "target_id": target_id,
                     "target_label": str(target_label),
-                    "target_sequence": None,
+                    "target_sequence": target_metadata.get("target_sequence"),
                     "affinity_type": str(affinity_type).upper().strip(),
                     "affinity_nm": float(affinity_value),
                     "source": "bindingdb",

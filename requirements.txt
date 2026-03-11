@@ -4,6 +4,7 @@ torch-geometric>=2.4.0
 
 # Chemistry
 rdkit-pypi>=2023.9.1
+biopython>=1.84
 
 # Data & Numerics
 pandas>=2.0.0

@@ -1,0 +1,21 @@
+{
+  "rows": 1617,
+  "targets": 8,
+  "ligands": 1296,
+  "affinity_types": [
+    "KD"
+  ],
+  "filter_stats": {
+    "initial_count": 89993,
+    "after_drop_na": 89993,
+    "after_type_filter": 3882,
+    "after_range_filter": 3882,
+    "invalid_smiles_count": 6,
+    "after_smiles_validation": 3876
+  },
+  "dedup_stats": {
+    "before_dedup": 3876,
+    "duplicate_groups": 445,
+    "after_dedup": 1617
+  }
+}

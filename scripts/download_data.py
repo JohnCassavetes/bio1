@@ -54,8 +54,9 @@ DAVIS_AFFINITY_URL = (
 )
 
 BINDINGDB_API_URL = (
-    "https://bindingdb.org/axis2/services/BDBService/getLigandsByUniprots"
+    "https://bindingdb.org/rest/getLigandsByUniprots"
 )
+UNIPROT_FASTA_URL = "https://rest.uniprot.org/uniprotkb/{uniprot_id}.fasta"
 AFFINITY_CUTOFF_NM = 10_000
 REQUEST_TIMEOUT_SEC = 30
 MAX_RETRIES = 3
@@ -140,7 +141,6 @@ def fetch_ligands_for_uniprot(
     params = {
         "uniprot": uniprot_id,
         "cutoff": cutoff_nm,
-        "code": 0,
         "response": "application/json",
     }
 
@@ -183,6 +183,38 @@ def fetch_ligands_for_uniprot(
     return None
 
 
+def fetch_uniprot_sequence(
+    uniprot_id: str,
+    *,
+    timeout: int = REQUEST_TIMEOUT_SEC,
+    max_retries: int = MAX_RETRIES,
+) -> Optional[str]:
+    """Fetch a UniProt FASTA sequence for a target."""
+    fasta_url = UNIPROT_FASTA_URL.format(uniprot_id=uniprot_id)
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(fasta_url, timeout=timeout)
+            if response.status_code == 200:
+                lines = [line.strip() for line in response.text.splitlines() if line.strip()]
+                if len(lines) >= 2:
+                    return "".join(lines[1:])
+                return None
+            if 400 <= response.status_code < 500:
+                logger.warning("UniProt client error %d for %s", response.status_code, uniprot_id)
+                return None
+        except (requests.ConnectionError, requests.Timeout) as exc:
+            logger.warning(
+                "UniProt network error for %s on attempt %d/%d: %s",
+                uniprot_id,
+                attempt + 1,
+                max_retries,
+                exc,
+            )
+        time.sleep(2 ** (attempt + 1))
+    logger.error("All UniProt retries exhausted for %s", uniprot_id)
+    return None
+
+
 def download_bindingdb(
     targets: Dict[str, str] = KINASE_TARGETS,
     cutoff_nm: int = AFFINITY_CUTOFF_NM,
@@ -190,6 +222,7 @@ def download_bindingdb(
 ) -> Dict[str, Any]:
     """Download a curated kinase panel from BindingDB."""
     output_dir.mkdir(parents=True, exist_ok=True)
+    target_metadata: Dict[str, Dict[str, Optional[str]]] = {}
     log: Dict[str, Any] = {
         "timestamp": datetime.now().isoformat(),
         "source": "bindingdb",
@@ -200,18 +233,35 @@ def download_bindingdb(
     for target_name, uniprot_id in targets.items():
         logger.info("Fetching BindingDB data for %s (%s)...", target_name, uniprot_id)
         data = fetch_ligands_for_uniprot(uniprot_id, cutoff_nm=cutoff_nm)
+        sequence = fetch_uniprot_sequence(uniprot_id)
+        target_metadata[uniprot_id] = {
+            "target_name": target_name,
+            "uniprot_id": uniprot_id,
+            "target_sequence": sequence,
+        }
 
         if data is not None:
             filepath = output_dir / f"bindingdb_{uniprot_id}.json"
             with open(filepath, "w") as fh:
                 json.dump(data, fh, indent=2)
 
-            count = len(data) if isinstance(data, list) else 1
+            if isinstance(data, list):
+                count = len(data)
+            elif isinstance(data, dict):
+                count = len(
+                    data.get("affinities")
+                    or data.get("getLigandsByUniprotsResponse", {}).get("affinities")
+                    or data.get("getLindsByUniprotsResponse", {}).get("affinities")
+                    or [data]
+                )
+            else:
+                count = 1
             log["targets"][target_name] = {
                 "uniprot_id": uniprot_id,
                 "status": "success",
                 "file": str(filepath),
                 "ligand_count": count,
+                "has_sequence": bool(sequence),
             }
             logger.info("  Saved %d records to %s", count, filepath)
         else:
@@ -220,6 +270,7 @@ def download_bindingdb(
                 "status": "failed",
                 "file": None,
                 "ligand_count": 0,
+                "has_sequence": bool(sequence),
             }
             logger.warning("  Failed for %s", target_name)
 
@@ -227,6 +278,8 @@ def download_bindingdb(
 
     with open(output_dir / "download_log.json", "w") as fh:
         json.dump(log, fh, indent=2)
+    with open(output_dir / "bindingdb_target_metadata.json", "w") as fh:
+        json.dump(target_metadata, fh, indent=2)
 
     pd.DataFrame(
         [{"kinase_name": name, "uniprot_id": uid} for name, uid in targets.items()]

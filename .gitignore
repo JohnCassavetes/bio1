@@ -22,6 +22,8 @@ build/
 .venv/
 env/
 venv/
+.venv312
+.venv312sys
 
 # OS
 .DS_Store

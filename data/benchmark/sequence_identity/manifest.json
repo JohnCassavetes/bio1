@@ -1,0 +1,22 @@
+{
+  "split_type": "sequence_identity",
+  "grouping": "sequence_identity_cluster",
+  "random_seed": 42,
+  "retained_rows": 30056,
+  "discarded_rows": 0,
+  "train_rows": 21080,
+  "val_rows": 4964,
+  "test_rows": 4012,
+  "train_targets": 310,
+  "val_targets": 73,
+  "test_targets": 59,
+  "train_ligands": 68,
+  "val_ligands": 68,
+  "test_ligands": 68,
+  "sequence_identity_threshold": 0.6,
+  "sequence_identity_metric": "global_alignment_percent_identity",
+  "sequence_identity_gap_open": -2.0,
+  "sequence_identity_gap_extend": -0.5,
+  "sequence_identity_cluster_count": 305,
+  "largest_sequence_identity_cluster": 15
+}

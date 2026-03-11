@@ -36,9 +36,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--splits",
         nargs="+",
-        default=["random", "cold_target", "cold_ligand", "scaffold", "both_new", "mutation_holdout"],
+        default=[
+            "random",
+            "cold_target",
+            "cold_ligand",
+            "scaffold",
+            "both_new",
+            "sequence_identity",
+            "mutation_holdout",
+        ],
     )
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--sequence-identity-threshold", type=float, default=0.6)
+    parser.add_argument("--sequence-kmer-size", type=int, default=3)
     return parser.parse_args()
 
 
@@ -53,12 +63,16 @@ def main() -> None:
             df,
             split_type=split_name,
             random_seed=args.seed,
+            sequence_identity_threshold=args.sequence_identity_threshold,
+            sequence_kmer_size=args.sequence_kmer_size,
         )
         split_dir = args.output_dir / split_name
         split_dir.mkdir(parents=True, exist_ok=True)
         bundle.train_df.to_csv(split_dir / "train.csv", index=False)
         bundle.val_df.to_csv(split_dir / "val.csv", index=False)
         bundle.test_df.to_csv(split_dir / "test.csv", index=False)
+        for artifact_name, artifact_df in (bundle.artifacts or {}).items():
+            artifact_df.to_csv(split_dir / f"{artifact_name}.csv", index=False)
         with open(split_dir / "manifest.json", "w") as fh:
             json.dump(bundle.manifest, fh, indent=2)
         manifest[split_name] = bundle.manifest

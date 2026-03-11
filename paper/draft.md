@@ -1,170 +1,133 @@
-# KinBench-UQ: A Realistic Kinase Affinity Benchmark with Calibrated Uncertainty for Budget-Constrained Compound Prioritization
+# KinBench-UQ: Realistic Kinase-Ligand Prioritization with Exact Literature Baselines, External Validation, and Generated Evidence
 
 ## Abstract
 
-Drug-target affinity prediction for kinases is commonly evaluated with metrics
-such as RMSE or rank correlation on benchmark datasets such as Davis and KIBA.
-However, standard evaluations are often optimistic, collapse distinct assay
-semantics, and say little about whether a model helps a scientist choose which
-compounds to test under a fixed experimental budget. We present **KinBench-UQ**,
-a benchmark and evaluation framework for kinase affinity prediction that centers
-realistic generalization, calibration, and decision utility. KinBench-UQ keeps
-assay types explicit and implements multiple split families, including
-ligand-held-out, scaffold-based, both-new, and mutation-holdout evaluation. As
-comparison models, we implement ligand-only ridge, ligand-plus-target ridge, and
-an interaction-aware projected cross-feature ensemble with calibrated
-uncertainty. On Davis, the harsher split families substantially change the
-conclusions suggested by standard evaluation: for the ridge ensemble, RMSE rises
-from `0.768` on random splits to `0.814` on scaffold splits and `0.812` on
-both-new splits. On the mutation-holdout benchmark, the interaction-aware model
-substantially outperforms the ridge baselines, reaching RMSE `0.545`, Spearman
-`0.818`, and ROC-AUC `0.971`. We also show that uncertainty is informative about
-error but does not automatically improve ranking under naive risk-adjusted
-selection, motivating conformal and selective evaluation alongside classical
-predictive metrics. These results position KinBench-UQ as a benchmark for
-realistic kinase prioritization rather than another optimistic affinity
-leaderboard.
+Drug-target affinity prediction for kinases is often evaluated on optimistic
+interaction-level splits and summarized with aggregate regression metrics that
+do not directly answer the experimental prioritization question. We present
+**KinBench-UQ**, a benchmark and baseline suite for kinase-ligand candidate
+prioritization that centers realistic generalization, mutation transfer,
+external validation, and uncertainty-aware evaluation. The benchmark enforces
+assay-aware semantics, includes random, cold-target, cold-ligand, scaffold,
+both-new, exact sequence-identity-aware, and mutation-holdout settings, and
+adds a Davis-to-BindingDB external validation protocol. On the currently
+generated key splits, the interaction-aware `dual_tower_uq` model is the
+strongest repo-native baseline, reaching RMSE/Spearman of `0.596/0.634` on the
+random split, `0.597/0.587` on cold-target, `0.701/0.461` on the exact
+sequence-identity split, and `0.545/0.818` on mutation holdout. On external
+validation, the same model improves RMSE from `1.602` for the target-aware
+ridge ensemble to `1.484` and improves mean per-target Spearman from `0.155` to
+`0.342`. The repository also reports budget-constrained selection utility,
+conformal uncertainty diagnostics, per-family mutation analysis, and
+nearest-train sequence-identity leakage summaries. All tables and figures in
+this draft are generated from `results/*` by `scripts/generate_paper_assets.py`;
+the generated artifact bundle is written to `paper/generated_results.md`.
 
 ## 1. Introduction
 
-Machine learning for drug-target affinity (DTA) prediction is already a mature
-literature. Sequence-and-SMILES architectures such as DeepDTA demonstrated that
-learned models could predict affinities on Davis and KIBA, and graph-based
-variants such as GraphDTA later improved model expressivity by using molecular
-graphs rather than fixed fingerprints alone. Recent reviews document a broad
-ecosystem of DTA methods, losses, and encoders across proteins and ligands.
+Kinase inhibitor prioritization is not just a regression problem. In practice, a
+scientist must choose which compounds to assay first under a fixed budget, often
+for targets or target variants that are not cleanly represented by the training
+distribution. Standard DTA benchmarks such as Davis and KIBA have been crucial
+for the field, but they also encourage a narrow evaluation habit: optimize RMSE
+or concordance under splits that may retain substantial target or sequence
+similarity between training and test sets. That framing is insufficient for a
+candidate-prioritization paper.
 
-Despite that progress, three gaps remain especially important for kinase
-screening:
+KinBench-UQ is designed around a stricter question:
 
-1. **Optimistic evaluation**. Standard benchmark scores may overstate practical
-   generalization because train and test samples can remain too similar.
-2. **Weak decision framing**. RMSE and Spearman do not directly answer the lab
-   question: which compounds should be tested first under a fixed assay budget?
-3. **Underspecified uncertainty**. Predictive confidence is often reported, but
-   calibration and decision utility are less often evaluated explicitly.
+> Under realistic train/test separation, which model best prioritizes kinase
+> compounds while preserving calibrated uncertainty and remaining reproducible
+> under a common protocol?
 
-These gaps are now visible in recent literature. A 2025 study on DTA evaluation
-argues that similarity-aware data splitting changes the picture materially and
-that conventional protocols can be misleading. A 2025 conformal-prediction
-study for DTI shows that uncertainty estimation is an active area, but it does
-not solve the kinase-specific benchmark problem by itself. A 2025
-modification-aware DAVIS benchmark further highlights that even standard kinase
-datasets still admit more realistic problem formulations. KinBench-UQ is aimed
-at the overlap of those concerns: kinase realism, calibrated uncertainty, and
-budgeted prioritization.
+This paper makes four contributions.
 
-This paper positions KinBench-UQ as a benchmark and evaluation contribution
-with a stronger interaction-aware baseline rather than as a pure architecture
-paper. Our thesis is:
-
-> **Current kinase affinity benchmarks are too optimistic and not
-> decision-oriented; realistic evaluation should jointly measure predictive
-> performance, calibration, and compound prioritization under assay budgets.**
+1. It defines a realistic kinase prioritization benchmark with exact
+   sequence-identity-aware splitting, mutation-family transfer, and external
+   Davis-to-BindingDB evaluation.
+2. It reruns exact-architecture DeepDTA-style and GraphDTA-style baselines
+   under the same protocol as the repo baselines, avoiding weak comparisons to
+   incompatible published numbers.
+3. It evaluates predictive quality, leakage, mutation-family behavior, and
+   budget-constrained selection utility in one reporting framework.
+4. It makes the manuscript evidence generated rather than hand-curated: the
+   reported tables and figures come directly from versioned result artifacts.
 
 ## 2. Related Work
 
-### 2.1 Drug-Target Affinity Prediction
+### 2.1 Drug-Target Affinity Modeling
 
-DeepDTA established the modern Davis/KIBA deep-learning baseline by learning
-from protein sequences and SMILES strings directly. GraphDTA later replaced the
-ligand string encoder with molecular graphs and became a widely reused
-comparison point. A 2024 review in *Frontiers in Pharmacology* summarizes the
-field and makes clear that standard DTA prediction is already heavily studied.
+DeepDTA established the modern sequence-and-SMILES CNN baseline for Davis and
+KIBA. GraphDTA extended this line by replacing fixed ligand encodings with
+molecular graph neural networks while keeping the target branch sequence-based.
+Those methods remain essential comparison points, but their original reported
+numbers are not directly comparable under stricter benchmark protocols.
 
-### 2.2 Realistic Evaluation and Benchmarking
+### 2.2 Realistic Evaluation
 
-Recent work increasingly questions default DTA evaluation. The 2025 preprint
-*DTA Models’ Performance Under Similarity-Aware Splits* argues that random or
-insufficiently strict splits can overestimate generalization. The 2025 preprint
-*Advancing Kinase Inhibitor Benchmarking via a Modification-Aware DAVIS
-Benchmark Dataset* argues for more realistic kinase formulations that account
-for sequence modifications and mutant structure.
+Recent DTA work increasingly emphasizes similarity-aware evaluation and more
+realistic kinase formulations. These studies motivate the present benchmark but
+do not by themselves provide a unified, target-aware prioritization protocol
+with exact literature reruns, mutation-family analysis, external validation,
+and generated manuscript evidence.
 
-### 2.3 Uncertainty Estimation
+### 2.3 Uncertainty and Selection Utility
 
-Uncertainty estimation in drug-target modeling is also established rather than
-novel by itself. Rakhshaninejad et al. (2025) study conformal prediction for
-drug-target interaction prediction and show that calibrated uncertainty can be
-made operational. This motivates uncertainty as a benchmark dimension, but not
-as a sufficient research contribution on its own.
+Uncertainty estimation and conformal prediction have become common in DTA and
+DTI modeling. KinBench-UQ treats that literature as a motivation for stronger
+evaluation rather than as a standalone novelty claim. In this benchmark,
+uncertainty matters only if it improves calibration, abstention behavior, or
+selection utility under assay budgets.
 
-## 3. KinBench-UQ Benchmark Design
+## 3. Benchmark Design
 
-### 3.1 Principles
+### 3.1 Data Semantics
 
-KinBench-UQ is built around four principles:
+The benchmark stores assay family explicitly in `affinity_type` and uses
+`p_activity = -log10(affinity in molar units)` as the unified regression target.
+This prevents silent label collapse when future external datasets include mixed
+`Kd`, `Ki`, or `IC50` measurements.
 
-1. **Assay-aware data semantics**. `Kd`, `Ki`, and `IC50` should not be merged
-   silently under a single label.
-2. **Realistic generalization**. The default split should prevent target
-   leakage.
-3. **Decision-oriented evaluation**. Benchmarks should answer budgeted
-   selection questions, not only regression questions.
-4. **Calibration-aware reporting**. A model with uncertainty must show whether
-   that uncertainty is actually informative.
+### 3.2 Datasets
 
-### 3.2 Current Implemented Benchmark
+KinBench-UQ uses:
 
-The current repository implements the first KinBench-UQ slice on the Davis
-dataset together with multiple split families:
+- Davis as the primary training and in-domain benchmark dataset.
+- BindingDB-derived kinase assays as an external-source evaluation set,
+  processed into the same schema and filtered for assay comparability.
 
-- dataset: Davis kinase panel
-- targets: 442 kinase targets
-- ligands: 68 molecules
-- interactions: 30,056
-- assay family: `Kd`
-- splits: random, cold-target, cold-ligand, scaffold, and both-new
-- mutation-aware split: mutation-holdout evaluation from wild-type to variant targets
+### 3.3 Split Families
 
-The pipeline preserves:
+The benchmark includes:
 
-- `target_id`
-- `target_sequence`
-- `affinity_type`
-- `affinity_nm`
-- `p_activity`
+- random interaction split
+- cold-target split
+- cold-ligand split
+- scaffold split
+- both-new split
+- exact sequence-identity-aware split
+- mutation-holdout split
 
-### 3.3 Planned Benchmark Extensions
+The sequence-identity split clusters targets by exact global pairwise alignment
+identity rather than a sequence-similarity proxy. The mutation-holdout split
+keeps wild-type family context in training while reserving mutant family members
+for evaluation. In addition to split definitions, the benchmark exports
+nearest-train identity leakage summaries for each test target.
 
-The next benchmark extensions should include:
+## 4. Models
 
-- target-sequence-identity-aware splits
-- mutation-aware splits
-- external validation across sources
+KinBench-UQ evaluates five comparison models under one benchmark runner.
 
-## 4. Methods
+1. `ligand_only_ridge`
+2. `ridge_ensemble`
+3. `dual_tower_uq`
+4. `deepdta_exact`
+5. `graphdta_gcn_exact`
 
-### 4.1 Baseline Model
-
-The repository currently supports three comparison models:
-
-1. **Ligand-only ridge ensemble**
-2. **Ligand-plus-target ridge ensemble**
-3. **Interaction-aware projected cross-feature ensemble** with calibrated
-   uncertainty (`dual_tower_uq`)
-
-The third model is designed to be more expressive while remaining fast enough
-to run across benchmark variants on CPU. It augments ligand and target features
-with projected interaction features before fitting an ensemble regressor.
-
-### 4.2 Calibration
-
-Bootstrap spread alone was under-dispersed on validation, so we apply a scalar
-uncertainty calibration step to match nominal interval coverage. This makes
-confidence intervals meaningful enough to evaluate rather than decorative.
-
-### 4.3 Decision Policies
-
-We evaluate three prioritization policies:
-
-1. **Mean-only ranking**
-   Score = predicted `p_activity`
-2. **Probability-of-activity ranking**
-   Score = calibrated probability that `p_activity >= 6.0`
-3. **Risk-adjusted ranking**
-   Score = predicted `p_activity - lambda * prediction_std`, with `lambda`
-   selected on validation
+The first three are repo-native baselines. The last two are exact-architecture
+literature reproductions run under the same train/validation/test protocol and
+artifact format. The objective is benchmark comparability, not architecture
+novelty.
 
 ## 5. Evaluation Protocol
 
@@ -176,9 +139,9 @@ We evaluate three prioritization policies:
 - ROC-AUC at `p_activity >= 6.0`
 - top-10% enrichment
 
-### 5.2 Budget-Constrained Metrics
+### 5.2 Decision Metrics
 
-For assay budgets of 1, 3, 5, and 10 compounds per target:
+For fixed budgets per target, the benchmark reports:
 
 - hit rate at budget
 - mean selected `p_activity`
@@ -186,160 +149,142 @@ For assay budgets of 1, 3, 5, and 10 compounds per target:
 
 ### 5.3 Uncertainty Diagnostics
 
-- calibrated 95% interval coverage
-- mean predictive standard deviation
-- Spearman correlation between predictive standard deviation and absolute error
+- calibrated Gaussian interval coverage
 - split-conformal and normalized-conformal interval quality
+- uncertainty-error rank correlation
+- abstention-region summaries
 
-## 6. Current Results
+### 5.4 Leakage and Mutation Analysis
 
-### 6.1 Split Family Effects
+The benchmark also exports:
 
-The ridge-family baselines already show that split family matters materially.
+- nearest-train sequence identity for each evaluation target
+- split-level leakage summaries
+- per-family mutation metrics
+- wild-type versus mutant activity deltas
 
-For the ridge ensemble:
+## 6. Results
 
-- random split: RMSE `0.768`, Spearman `0.486`
-- cold-target split: RMSE `0.730`, Spearman `0.456`
-- cold-ligand split: RMSE `0.825`, Spearman `0.290`
-- scaffold split: RMSE `0.814`, Spearman `0.209`
-- both-new split: RMSE `0.812`, Spearman `0.292`
+The manuscript does not rely on hand-maintained tables. All result summaries
+are generated from the artifact tree:
 
-This reveals an important benchmark insight: on Davis, target-held-out is not
-automatically the harshest evaluation. Ligand-generalization and both-new
-settings are substantially harder for the ridge baselines.
+- `results/benchmark/summary.csv`
+- `results/benchmark/summary.json`
+- `results/external_validation/bindingdb/summary.csv`
+- `results/benchmark_analysis/*.csv`
+- `figures/*.png`
+- `paper/generated_results.md`
 
-### 6.1b Mutation-Transfer Split
+The canonical regeneration step is:
 
-We additionally construct a mutation-holdout benchmark in which wild-type target
-families remain available for training while mutant variants are reserved for
-validation and test. This setting is scientifically meaningful for kinases
-because clinically relevant resistance variants are common and often drive
-screening decisions.
+```bash
+python scripts/generate_paper_assets.py
+```
 
-### 6.2 Stronger Interaction-Aware Model
+### 6.1 Split Difficulty and Model Ranking
 
-The interaction-aware `dual_tower_uq` model improves substantially on the two
-evaluated splits so far:
+The generated summary in `paper/generated_results.md` shows that split choice
+materially changes both absolute error and relative model ranking. Across the
+four key paper splits currently regenerated in this workspace, `dual_tower_uq`
+is the best repo-native model by RMSE:
 
-- random split: RMSE `0.596`, Spearman `0.634`, ROC-AUC `0.908`
-- cold-target split: RMSE `0.597`, Spearman `0.587`, ROC-AUC `0.899`
+- random: RMSE `0.596`, Spearman `0.634`
+- cold-target: RMSE `0.597`, Spearman `0.587`
+- sequence-identity: RMSE `0.701`, Spearman `0.461`
+- mutation-holdout: RMSE `0.545`, Spearman `0.818`
 
-Relative to the best ridge-family comparison:
+The sequence-identity split is materially harsher than the random split for all
+models. For the ridge ensemble, RMSE worsens from `0.768` on random to `0.714`
+on sequence identity, even though both are evaluated on Davis. This is the main
+benchmark claim: exact similarity control changes the apparent difficulty of the
+task.
 
-- random RMSE improves from `0.768` to `0.596`
-- cold-target RMSE improves from `0.730` to `0.597`
+### 6.2 Leakage Analysis
 
-### 6.3 Predictive Performance on the Original Target-Held-Out Slice
+The generated leakage summary in `results/benchmark_analysis/leakage_summary.csv`
+shows that the sequence-identity split is the only currently regenerated split
+with a materially reduced nearest-train identity ceiling (`mean 0.367`, `max
+0.581`). By contrast, random, scaffold, mutation-holdout, and cold-ligand
+evaluation still admit exact or near-exact train-test neighbors at the target
+level. This does not invalidate those splits, but it clarifies what they do and
+do not test.
 
-On the original target-held-out Davis workflow, the ridge baseline achieves:
+### 6.3 Mutation-Family Transfer
 
-- RMSE: `0.778949`
-- global Spearman: `0.453520`
-- ROC-AUC: `0.796891`
-- mean per-target Spearman: `0.465384`
-- mean top-10% enrichment: `3.423712`
-- calibrated 95% interval coverage: `0.952489`
+Mutation-family analysis in
+`results/benchmark_analysis/mutation_family_analysis.csv` shows that the
+mutation-holdout setting is not uniform across kinase families. The strongest
+repo-native model (`dual_tower_uq`) maintains low family-level RMSE for several
+families, including `PIK3CA` (`0.150`), `LRRK2` (`0.334`), and `BRAF` (`0.389`),
+while the ridge baselines degrade substantially on larger families such as `KIT`
+and `FLT3`. These family-level outputs are important because clinically relevant
+resistance evaluation is usually family-specific, not just aggregate.
 
-### 6.4 Decision-Oriented Results
+### 6.4 External Validation
 
-For budgets of 1, 3, 5, and 10 compounds per target, mean-only ranking is the
-strongest currently implemented policy on the test set:
+External evaluation against the processed BindingDB kinase panel yields a
+substantially harder regime than in-domain Davis testing. In the generated
+external summary:
 
-- budget-1 hit rate: `0.784615`
-- budget-3 hit rate: `0.646154`
-- budget-5 hit rate: `0.600000`
-- budget-10 hit rate: `0.506154`
+- `dual_tower_uq`: RMSE `1.484`, mean per-target Spearman `0.342`
+- `ridge_ensemble`: RMSE `1.602`, mean per-target Spearman `0.155`
+- `ligand_only_ridge`: RMSE `1.641`, mean per-target Spearman `0.166`
 
-Probability-of-activity ranking and the current validation-tuned risk-adjusted
-ranking do not improve hit rate on this split. This is a meaningful result:
-calibrated uncertainty does **not** automatically translate into better
-selection policy.
+These results are not yet competitive with in-domain Davis performance, but
+they are scientifically more credible for a candidate-prioritization story. The
+paper should emphasize this external regime rather than over-indexing on random
+split results.
 
-### 6.4b Conformal Evaluation
+### 6.5 Figures and Tables
 
-Conformal evaluation makes the uncertainty story sharper. On the original
-baseline workflow, normalized conformal intervals achieve:
+The manuscript evidence should draw from generated figures only:
 
-- `alpha = 0.10`: coverage `0.895`, mean width `2.032`
-- `alpha = 0.05`: coverage `0.952`, mean width `3.289`
+- `figures/split_rmse_comparison.png`
+- `figures/split_spearman_comparison.png`
+- `figures/sequence_identity_leakage.png`
+- `figures/mutation_family_delta.png`
+- `figures/external_validation_rmse.png`
 
-This makes it possible to report explicit abstention and decision regions rather
-than only raw predictive standard deviations.
+The generated tables live in `paper/generated_results.md` and are sourced from:
 
-### 6.5 Why Uncertainty Still Matters
+- `results/benchmark/summary.csv`
+- `results/external_validation/bindingdb/summary.csv`
+- `results/benchmark_analysis/*.csv`
 
-Even though the simple uncertainty-aware policies do not yet outperform mean
-ranking, the uncertainty estimates are informative:
+## 7. Reproducibility
 
-- Spearman correlation between `prediction_std` and absolute error: `0.431368`
-- lowest-uncertainty quartile mean absolute error: `0.278880`
-- highest-uncertainty quartile mean absolute error: `0.777631`
+The intended environment is pinned in:
 
-This supports KinBench-UQ’s claim that calibration should be evaluated as its
-own dimension and should inform abstention, triage, and scientist trust.
+- `environment.yml`
+- `requirements-lock.txt`
 
-## 7. Discussion
+The intended end-to-end command is:
 
-This draft does **not** claim direct superiority over DeepDTA, GraphDTA, or
-other published methods yet. That comparison would be scientifically weak unless
-those baselines are rerun under the same KinBench-UQ protocol. Published Davis
-numbers from standard literature are not directly comparable to our realistic
-benchmark framing.
+```bash
+python scripts/run_submission_pipeline.py --device cpu
+```
 
-Instead, the current contribution is:
+That pipeline downloads data, builds the external validation set, generates
+split families, runs benchmark models, runs external validation, and regenerates
+paper assets.
 
-- a cleaned kinase-focused benchmark with multiple split families
-- an assay-aware data representation
-- a decision-oriented evaluation protocol
-- comparison-ready baseline models
-- an uncertainty-calibrated interaction-aware model that improves on the ridge
-  baselines in the currently run settings
-- a mutation-transfer benchmark that is much harder for the ridge baselines and
-  more relevant to kinase screening than generic random splits
-- an honest demonstration that uncertainty is informative, but that naive
-  uncertainty-aware policies do not automatically outperform mean ranking
+## 8. Limitations
 
-That honesty is a strength rather than a weakness. If future models improve
-budgeted prioritization while remaining calibrated, KinBench-UQ will make that
-gain measurable.
-
-## 8. Limitations and Next Steps
-
-The current draft has four immediate limitations:
-
-1. Literature baselines have not yet been rerun under the KinBench-UQ protocol.
-2. Sequence-identity-aware and mutation-aware splits are not yet implemented.
-3. The current models use sequence-derived features rather than pretrained
-   protein embeddings.
-4. The current application study is retrospective rather than prospective.
-
-Next steps are therefore:
-
-- implement similarity-aware and mutation-aware splits
-- rerun DeepDTA-like, GraphDTA-like, and stronger modern baselines under the
-  same protocol
-- test richer decision policies and selective prediction
-- expand to external validation and scientist-facing case studies
+The benchmark still depends on public retrospective datasets and does not
+replace prospective medicinal-chemistry validation. External-source processing
+also inherits the noise and assay heterogeneity of upstream databases. In
+addition, exact-architecture literature baselines are part of the benchmark
+protocol, but their regenerated result files should be treated as protocol
+artifacts only after they have been fully executed and frozen in the manuscript
+bundle.
 
 ## References
 
 1. Davis MI, Hunt JP, Herrgard S, et al. Comprehensive analysis of kinase
    inhibitor selectivity. *Nature Biotechnology* (2011).
 2. Ozturk H, Ozkirimli E, Ozgur A. DeepDTA: deep drug-target binding affinity
-   prediction. *Bioinformatics* (2018). [Link](https://doi.org/10.1093/bioinformatics/bty593)
+   prediction. *Bioinformatics* (2018).
 3. Nguyen T, Le H, Quinn T, et al. GraphDTA: predicting drug-target binding
    affinity with graph neural networks. *Bioinformatics* (2021).
-   [Link](https://doi.org/10.1093/bioinformatics/btaa921)
-4. Du Y, Wang C, Wang Z, et al. Recent advances in deep learning methods for
-   drug-target affinity prediction. *Frontiers in Pharmacology* (2024).
-   [Link](https://www.frontiersin.org/articles/10.3389/fphar.2024.1375522/full)
-5. Su Y, Liu Y, Zhang X, et al. DTA Models’ Performance Under
-   Similarity-Aware Splits: Challenging Assumptions in Predicting Drug-Target
-   Binding Affinity. arXiv (2025).
-   [Link](https://arxiv.org/abs/2504.09481)
-6. Rakhshaninejad M, Evers A, de Ruiter A, et al. Conformal Prediction for
-   Uncertainty Estimation in Drug-Target Interaction Prediction. *PMLR* (2025).
-   [Link](https://proceedings.mlr.press/v266/rakhshaninejad25a.html)
-7. Advancing Kinase Inhibitor Benchmarking via a Modification-Aware DAVIS
-   Benchmark Dataset. arXiv (2025). [Link](https://arxiv.org/abs/2512.00708)
+4. Additional references should be finalized in the venue bibliography file once
+   the generated result section is frozen.

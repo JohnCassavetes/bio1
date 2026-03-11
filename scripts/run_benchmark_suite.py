@@ -17,6 +17,12 @@ if str(SRC_DIR) not in sys.path:
 
 from kinase_ligand_ranking.dataset import load_dataset
 from kinase_ligand_ranking.features import build_feature_components, build_feature_matrix
+from kinase_ligand_ranking.literature_models import (
+    DeepDTAExactConfig,
+    GraphDTAGCNConfig,
+    run_deepdta_exact,
+    run_graphdta_gcn_exact,
+)
 from kinase_ligand_ranking.metrics import evaluate_split
 from kinase_ligand_ranking.modeling import (
     RidgeEnsembleConfig,
@@ -64,17 +70,23 @@ def parse_args() -> argparse.Namespace:
         default=[0.1, 1.0, 10.0, 100.0],
     )
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--device",
+        default=None,
+        help="Torch device override for literature baselines, for example: cpu or cuda",
+    )
     return parser.parse_args()
 
 
 def attach_predictions(
     df: pd.DataFrame,
     predicted_mean: np.ndarray,
-    predicted_std: np.ndarray,
+    predicted_std: np.ndarray | None = None,
 ) -> pd.DataFrame:
     result = df.copy()
     result["predicted_p_activity"] = predicted_mean
-    result["prediction_std"] = predicted_std
+    if predicted_std is not None:
+        result["prediction_std"] = predicted_std
     result["absolute_error"] = (result["predicted_p_activity"] - result["p_activity"]).abs()
     return result
 
@@ -197,6 +209,48 @@ def run_dual_tower_uq(
     }
 
 
+def run_deepdta_exact_model(
+    train_df: pd.DataFrame,
+    val_df: pd.DataFrame,
+    test_df: pd.DataFrame,
+    *,
+    seed: int,
+    device: str | None,
+) -> Tuple[pd.DataFrame, Dict[str, object]]:
+    test_mean, metadata = run_deepdta_exact(
+        train_df,
+        val_df,
+        test_df,
+        config=DeepDTAExactConfig(random_seed=seed),
+        device=device,
+    )
+    predictions = attach_predictions(test_df, test_mean, None)
+    metrics = evaluate_split(predictions)
+    metadata["metrics"] = metrics["overall"]
+    return predictions, metadata
+
+
+def run_graphdta_gcn_exact_model(
+    train_df: pd.DataFrame,
+    val_df: pd.DataFrame,
+    test_df: pd.DataFrame,
+    *,
+    seed: int,
+    device: str | None,
+) -> Tuple[pd.DataFrame, Dict[str, object]]:
+    test_mean, metadata = run_graphdta_gcn_exact(
+        train_df,
+        val_df,
+        test_df,
+        config=GraphDTAGCNConfig(random_seed=seed),
+        device=device,
+    )
+    predictions = attach_predictions(test_df, test_mean, None)
+    metrics = evaluate_split(predictions)
+    metadata["metrics"] = metrics["overall"]
+    return predictions, metadata
+
+
 def model_runner(
     model_name: str,
     train_df: pd.DataFrame,
@@ -205,6 +259,7 @@ def model_runner(
     *,
     alphas: List[float],
     seed: int,
+    device: str | None,
 ) -> Tuple[pd.DataFrame, Dict[str, object]]:
     if model_name == "ligand_only_ridge":
         return run_ligand_only_ridge(train_df, val_df, test_df, alphas=alphas, seed=seed)
@@ -212,6 +267,10 @@ def model_runner(
         return run_ridge_ensemble(train_df, val_df, test_df, alphas=alphas, seed=seed)
     if model_name == "dual_tower_uq":
         return run_dual_tower_uq(train_df, val_df, test_df, seed=seed)
+    if model_name == "deepdta_exact":
+        return run_deepdta_exact_model(train_df, val_df, test_df, seed=seed, device=device)
+    if model_name == "graphdta_gcn_exact":
+        return run_graphdta_gcn_exact_model(train_df, val_df, test_df, seed=seed, device=device)
     raise ValueError(f"Unsupported model: {model_name}")
 
 
@@ -252,6 +311,7 @@ def main() -> None:
                 test_df,
                 alphas=args.alphas,
                 seed=args.seed,
+                device=args.device,
             )
             predictions.to_csv(model_results_dir / "test_predictions.csv", index=False)
             with open(model_results_dir / "metrics.json", "w") as fh:

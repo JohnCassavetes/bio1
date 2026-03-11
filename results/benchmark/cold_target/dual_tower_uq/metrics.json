@@ -1,0 +1,28 @@
+{
+  "feature_metadata": {
+    "fingerprint_bits": 1024,
+    "fingerprint_radius": 2,
+    "sequence_feature_count": 22,
+    "assay_feature_count": 3,
+    "source_feature_count": 2
+  },
+  "uncertainty_scale": 5.991073,
+  "training_history": [
+    {
+      "n_estimators": 128.0,
+      "val_rmse": 0.578204
+    }
+  ],
+  "metrics": {
+    "rows": 4420,
+    "targets": 65,
+    "rmse": 0.596773,
+    "spearman": 0.586961,
+    "roc_auc": 0.898974,
+    "prediction_interval_95_coverage": 0.984615,
+    "mean_prediction_std": 2.697895,
+    "mean_per_target_spearman": 0.571472,
+    "mean_top_10pct_enrichment": 4.962545,
+    "mean_per_target_roc_auc": 0.900726
+  }
+}

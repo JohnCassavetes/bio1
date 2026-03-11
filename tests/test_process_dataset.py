@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-from scripts.process_dataset import affinity_nm_to_pactivity, split_by_target
+from scripts.process_dataset import _parse_bindingdb_response, affinity_nm_to_pactivity, split_by_target
 
 
 class ProcessDatasetTestCase(unittest.TestCase):
@@ -50,6 +50,29 @@ class ProcessDatasetTestCase(unittest.TestCase):
             train_targets | val_targets | test_targets,
             set(assignments["train"]) | set(assignments["val"]) | set(assignments["test"]),
         )
+
+    def test_parse_bindingdb_response_handles_rest_wrapper(self):
+        response = {
+            "getLindsByUniprotsResponse": {
+                "affinities": [
+                    {
+                        "query": "EGFR",
+                        "smile": "CCO",
+                        "affinity_type": "Ki",
+                        "affinity": "25",
+                    }
+                ]
+            }
+        }
+        records = _parse_bindingdb_response(
+            response,
+            "P00533",
+            {"target_name": "EGFR", "target_sequence": "ACDE"},
+        )
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]["target_label"], "EGFR")
+        self.assertEqual(records[0]["target_sequence"], "ACDE")
+        self.assertEqual(records[0]["affinity_type"], "KI")
 
 
 if __name__ == "__main__":

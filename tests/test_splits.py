@@ -68,6 +68,42 @@ class SplitGenerationTestCase(unittest.TestCase):
             set(bundle.val_df["target_id"]).union(set(bundle.test_df["target_id"])) <= {"EGFR(T790M)", "ABL1(T315I)"}
         )
 
+    def test_sequence_identity_split_groups_similar_targets(self):
+        df = pd.DataFrame(
+            {
+                "smiles": ["A", "A", "B", "B", "C", "C"],
+                "target_id": ["T1", "T1_mut", "T2", "T2_mut", "T3", "T4"],
+                "target_label": ["T1", "T1_mut", "T2", "T2_mut", "T3", "T4"],
+                "target_sequence": [
+                    "AAAAAA",
+                    "AAAAAT",
+                    "CCCCCC",
+                    "CCCCCG",
+                    "GGGGGG",
+                    "TTTTTT",
+                ],
+                "affinity_type": ["KD"] * 6,
+                "activity_label": ["pKd"] * 6,
+                "affinity_nm": [1.0] * 6,
+                "p_activity": [8.0, 7.8, 7.5, 7.2, 6.4, 6.1],
+                "measurement_count": [1] * 6,
+                "source": ["davis"] * 6,
+            }
+        )
+        bundle = generate_split_bundle(
+            df,
+            split_type="sequence_identity",
+            random_seed=7,
+            sequence_identity_threshold=0.5,
+            sequence_kmer_size=2,
+        )
+        self.assertIn("sequence_identity_cluster_count", bundle.manifest)
+        self.assertEqual(bundle.manifest["sequence_identity_metric"], "global_alignment_percent_identity")
+        self.assertIn("target_sequence_identity", bundle.artifacts)
+        self.assertIn("target_sequence_identity_clusters", bundle.artifacts)
+        combined_rows = len(bundle.train_df) + len(bundle.val_df) + len(bundle.test_df)
+        self.assertEqual(combined_rows, len(df))
+
 
 if __name__ == "__main__":
     unittest.main()
