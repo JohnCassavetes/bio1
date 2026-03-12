@@ -12,6 +12,28 @@ That is the real goal of this project. We are not trying to claim that the compu
 
 In real lab work, time and money are limited. Scientists cannot test every possible molecule. A ranking system that puts better candidates near the top can save effort and help focus experiments.
 
+## The core problem
+
+Scientists are trying to find drugs that work on kinases, which are proteins
+involved in diseases such as cancer and Parkinson's. They use AI models to
+predict which drug candidates are worth testing in the lab.
+
+The problem is that many existing tests for these AI models are too easy. That
+can make the models look better than they really are in real-life settings.
+
+## A simple analogy
+
+Imagine you are training a student to recognize dogs they have never seen
+before. But the test keeps showing them dogs that look almost identical to the
+ones they already studied. The student scores very highly, but then struggles
+when shown a truly unfamiliar breed.
+
+That would be a misleading test.
+
+That is close to what happens in kinase AI benchmarks when proteins that are
+too similar to the training set still appear in testing. The model can look
+smarter than it really is.
+
 ## What does this project do?
 
 The system looks at two things:
@@ -35,6 +57,24 @@ Sometimes a model looks good because:
 We wanted a benchmark that asks a harder and more realistic question:
 
 > Does a model still look good when the test is stricter and closer to real candidate prioritization?
+
+## What KinBench does differently
+
+KinBench is mainly a stricter test.
+
+It tries to make sure the model is being tested on proteins that are not just
+near-copies of proteins it already saw during training. It also tests mutant
+kinases, which matters because drug resistance often happens through mutations.
+
+So the main point is not:
+
+> "we built the best AI for drug discovery"
+
+The main point is closer to:
+
+> "we built a better exam for grading AI models used in kinase drug discovery"
+
+And when we use that harder exam, the rankings between models change.
 
 ## What did we build?
 
@@ -220,3 +260,12 @@ The stronger and more honest claim is:
 > We built a more realistic and reproducible kinase candidate-prioritization benchmark, and our main model remains especially strong on some of the harder evaluation settings.
 
 That is a better paper story than winning only on an easy split.
+
+## Why this matters in the real world
+
+If a drug company or research lab uses only an easy benchmark, it can end up
+trusting an AI model too much.
+
+KinBench helps give a more honest picture of whether a model is likely to hold
+up when the task is genuinely difficult. That matters before spending large
+amounts of time and money on lab experiments.

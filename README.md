@@ -18,6 +18,29 @@ It provides:
 4. Ranking metrics on held-out kinase targets
 5. Uncertainty estimates calibrated on validation data
 
+## Why This Benchmark Exists
+
+Scientists use AI models to help decide which kinase-targeting compounds are
+worth testing in the lab. The problem is that many standard evaluations are too
+easy: proteins in the test set can still be very similar to proteins the model
+already saw during training. That can make a model look stronger than it really
+is.
+
+An easy way to think about it is:
+
+> if you train someone to recognize dogs, but the test only shows them dogs
+> that look almost identical to the ones they already studied, the test will
+> overstate how well they generalize
+
+KinBench-UQ exists to make that evaluation stricter and more realistic for
+kinase-specific candidate prioritization. In particular, it adds
+sequence-identity-aware splitting, mutation-family evaluation, external
+validation, and generated analysis artifacts that make leakage and split
+difficulty visible.
+
+So the main contribution is not simply "a better model." It is also "a better
+exam" for evaluating kinase prioritization models.
+
 ## Current Workflow
 
 ```text

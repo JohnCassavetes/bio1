@@ -63,6 +63,26 @@ analysis, and external validation. Second, it packages that benchmark in a
 reproducible form: the result summaries, figures, and manuscript artifacts are
 generated directly from versioned result files.
 
+\subsection{Relationship to TDC}
+
+KinBench-UQ is intended as a complement to Therapeutics Data Commons (TDC),
+not as a replacement. TDC provides broad therapeutic machine-learning coverage,
+standardized tasks, and reusable split infrastructure across many biomedical
+settings~\cite{tdc_paper,tdc_site,tdc_splits,tdc_dti}. KinBench-UQ addresses a
+more specialized question: for kinase-focused candidate prioritization, how
+much target-similarity leakage remains under standard cold-target style
+evaluation, and what changes when the benchmark enforces exact
+sequence-identity-aware splitting?
+
+This framing is important. The claim is not that broad frameworks are wrong.
+The claim is that kinase-focused evaluation exposes a gap that broad cold-start
+protocols do not necessarily surface on their own. In the current benchmark,
+the cold-target split retains a mean nearest-train sequence identity of 0.571
+and a maximum of 1.000, whereas the sequence-identity split reduces these
+values to 0.367 and 0.581, respectively. We therefore present the leakage
+analysis as evidence of a missing evaluation regime, not as a gotcha aimed at
+generalist benchmarks.
+
 \section{Task and Data}
 
 \subsection{Task Definition}
@@ -278,6 +298,28 @@ with a materially reduced nearest-train identity ceiling. This is visible in
 Figure~\ref{fig:leakage} and explains why the sequence-aware setting is a more
 convincing generalization test than standard random holdout alone.
 
+\begin{table}[H]
+\centering
+\caption{Leakage and difficulty comparison between a cold-target style split
+and the exact sequence-identity split. Lower nearest-train identity indicates
+stricter target separation.}
+\label{tab:split-gap}
+\begin{tabular}{lcccc}
+\toprule
+Split & Mean nearest-train identity & Max nearest-train identity & Best RMSE & Best Spearman \\
+\midrule
+Cold-target & 0.571 & 1.000 & 0.597 & 0.587 \\
+Sequence-identity & 0.367 & 0.581 & 0.681 & 0.461 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:split-gap} makes the complement-to-TDC interpretation concrete.
+The cold-target style split is useful, but it does not fully remove target
+similarity. The sequence-identity split is both less leaky and more difficult,
+which suggests that kinase-specific evaluation benefits from a stricter
+similarity-aware protocol in addition to broader cold-start benchmarking.
+
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.8\linewidth]{sequence_identity_leakage.png}
@@ -399,5 +441,32 @@ The current results show that the benchmark meaningfully differentiates models:
 \texttt{deepdta\_exact} is strongest on easier settings, while
 \texttt{dual\_tower\_uq} is particularly strong on several harder and more
 scientist-relevant evaluation regimes.
+
+\begin{thebibliography}{9}
+
+\bibitem{tdc_paper}
+Kexin Huang, Tianfan Fu, Wenhao Gao, Yue Zhao, Yusuf Roohani, Jure Leskovec,
+Connor W. Coley, Cao Xiao, Jimeng Sun, and Marinka Zitnik.
+\newblock Therapeutics Data Commons: Machine Learning Datasets and Tasks for
+Drug Discovery and Development.
+\newblock \emph{arXiv preprint arXiv:2102.09548}, 2021.
+\newblock \url{https://arxiv.org/abs/2102.09548}
+
+\bibitem{tdc_site}
+Therapeutics Data Commons.
+\newblock TDC homepage.
+\newblock \url{https://tdcommons.ai/}
+
+\bibitem{tdc_splits}
+Therapeutics Data Commons.
+\newblock Dataset Splits documentation.
+\newblock \url{https://tdcommons.ai/functions/data_split/}
+
+\bibitem{tdc_dti}
+Therapeutics Data Commons.
+\newblock Drug-Target Interaction task page.
+\newblock \url{https://tdcommons.ai/multi_pred_tasks/dti}
+
+\end{thebibliography}
 
 \end{document}
