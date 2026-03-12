@@ -5,22 +5,22 @@ All tables below are generated from result files under `results/`.
 ## Primary Tables
 
 split,model,rmse,spearman,roc_auc,mean_per_target_spearman
-cold_target,graphdta_gcn_exact,0.69,0.478,0.829,0.516
-mutation_holdout,graphdta_gcn_exact,0.736,0.749,0.942,0.626
+cold_target,dual_tower_uq,0.597,0.587,0.899,0.571
+mutation_holdout,dual_tower_uq,0.545,0.818,0.971,0.714
 random,graphdta_gcn_exact,0.591,0.61,0.892,0.579
-sequence_identity,graphdta_gcn_exact,0.78,0.385,0.763,0.424
+sequence_identity,dual_tower_uq,0.701,0.461,0.809,0.493
 
-split,graphdta_gcn_exact
-cold_target,0.69
-mutation_holdout,0.736
-random,0.591
-sequence_identity,0.78
+split,dual_tower_uq,graphdta_gcn_exact,ridge_ensemble
+cold_target,0.597,0.69,0.73
+mutation_holdout,0.545,0.736,1.158
+random,0.596,0.591,0.768
+sequence_identity,0.701,0.78,0.714
 
-split,graphdta_gcn_exact
-cold_target,0.478
-mutation_holdout,0.749
-random,0.61
-sequence_identity,0.385
+split,dual_tower_uq,graphdta_gcn_exact,ridge_ensemble
+cold_target,0.587,0.478,0.456
+mutation_holdout,0.818,0.749,0.463
+random,0.634,0.61,0.486
+sequence_identity,0.461,0.385,0.43
 
 split,test_targets,mean_nearest_train_identity,median_nearest_train_identity,max_nearest_train_identity
 both_new,65,0.571,0.532,1.0
@@ -32,6 +32,12 @@ scaffold,442,1.0,1.0,1.0
 sequence_identity,59,0.367,0.391,0.581
 
 model,mutation_family,rows,targets,variant_targets,wildtype_train_rows,wildtype_train_targets,rmse,spearman,variant_mean_p_activity,wildtype_train_mean_p_activity,variant_minus_wildtype_p_activity,mean_nearest_train_identity
+dual_tower_uq,PIK3CA,612,9,9,68,1,0.15,0.458,5.173,5.179,-0.005,1.0
+dual_tower_uq,LRRK2,68,1,1,68,1,0.334,0.819,5.567,5.544,0.023,1.0
+dual_tower_uq,BRAF,68,1,1,68,1,0.389,0.75,5.417,5.359,0.058,1.0
+dual_tower_uq,MET,136,2,2,68,1,0.411,0.834,5.583,5.59,-0.007,1.0
+dual_tower_uq,FLT3,408,6,6,68,1,0.52,0.903,6.23,6.358,-0.128,1.0
+dual_tower_uq,KIT,476,7,7,68,1,0.871,0.817,6.257,6.563,-0.306,1.0
 graphdta_gcn_exact,LRRK2,68,1,1,68,1,0.465,0.769,5.567,5.544,0.023,1.0
 graphdta_gcn_exact,PIK3CA,612,9,9,68,1,0.598,0.386,5.173,5.179,-0.005,1.0
 graphdta_gcn_exact,FLT3,408,6,6,68,1,0.766,0.754,6.23,6.358,-0.128,1.0
