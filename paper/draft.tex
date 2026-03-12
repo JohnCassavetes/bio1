@@ -1,5 +1,7 @@
 \documentclass[11pt]{article}
 \usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{subcaption}
@@ -8,6 +10,7 @@
 \usepackage{array}
 \usepackage{hyperref}
 \usepackage{enumitem}
+\graphicspath{{img/}}
 
 \title{KinBench-UQ: Realistic Kinase--Ligand Candidate Prioritization with Exact Literature Baselines and Reproducible Evidence}
 \author{}
@@ -54,11 +57,11 @@ Under realistic train--test separation, which model best prioritizes kinase
 compounds, and how reproducible is the resulting evidence?
 \end{quote}
 
-The repository aims to contribute on two axes at once. First, it provides a
-target-aware benchmark with realistic split families, leakage analysis,
-mutation-family analysis, and external validation. Second, it packages that
-benchmark in a reproducible way: the result summaries, figures, and manuscript
-fragment are generated directly from versioned result files.
+KinBench-UQ contributes on two axes. First, it provides a target-aware
+benchmark with realistic split families, leakage analysis, mutation-family
+analysis, and external validation. Second, it packages that benchmark in a
+reproducible form: the result summaries, figures, and manuscript artifacts are
+generated directly from versioned result files.
 
 \section{Task and Data}
 
@@ -98,8 +101,8 @@ closer comparability to Davis.
 A single easy split can produce misleadingly optimistic conclusions. A model
 may appear to generalize while still benefiting from near-duplicate target
 context, dataset-specific regularities, or evaluation scenarios that do not
-match the intended use case. To address this, KinBench-UQ evaluates multiple
-split families that test different types of generalization.
+match the intended use case. KinBench-UQ therefore evaluates multiple split
+families that probe different forms of generalization.
 
 \subsection{Primary Split Families}
 
@@ -172,10 +175,10 @@ The repository feature pipeline, implemented in
 
 \subsection{Why Literature Baselines Matter}
 
-The literature baselines are not included for decoration. They are needed so
-the benchmark does not reduce to ``our model on our preferred split.'' Running
-DeepDTA and GraphDTA under the same protocol makes the comparison more credible
-than quoting incompatible numbers from older papers.
+The literature baselines are included to prevent the benchmark from collapsing
+into ``our model on our preferred split.'' Running DeepDTA and GraphDTA under
+the same protocol is materially stronger than quoting incompatible numbers from
+older papers.
 
 \section{Evaluation Protocol}
 
@@ -229,8 +232,8 @@ step-by-step path is documented in \texttt{docs/reproduce\_paper.md}.
 \subsection{Main Benchmark Results}
 
 Table~\ref{tab:main-results} summarizes the current four-split comparison. The
-most important outcome is that the benchmark produces a meaningful trade-off
-landscape rather than a trivial win for one model on every axis.
+main result is not a trivial single-model win, but a meaningful trade-off
+landscape across evaluation regimes.
 
 \begin{table}[H]
 \centering
@@ -260,11 +263,11 @@ Mutation-holdout & deepdta\_exact & 0.764 & 0.739 \\
 \end{tabular}
 \end{table}
 
-These results support three observations. First, \texttt{deepdta\_exact} is
-the strongest model on the easier random split. Second, the harder
-\texttt{cold\_target} and \texttt{mutation\_holdout} settings favor
+Three observations follow directly from Table~\ref{tab:main-results}. First,
+\texttt{deepdta\_exact} is strongest on the easier random split. Second, the
+harder \texttt{cold\_target} and \texttt{mutation\_holdout} settings favor
 \texttt{dual\_tower\_uq}. Third, the exact sequence-identity split produces a
-more nuanced picture: \texttt{deepdta\_exact} is slightly best by RMSE, while
+more nuanced outcome: \texttt{deepdta\_exact} is slightly best by RMSE, while
 \texttt{dual\_tower\_uq} is slightly best by Spearman.
 
 \subsection{Split Difficulty and Leakage}
@@ -277,7 +280,7 @@ convincing generalization test than standard random holdout alone.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\linewidth]{../figures/sequence_identity_leakage.png}
+\includegraphics[width=0.8\linewidth]{sequence_identity_leakage.png}
 \caption{Mean nearest-train sequence identity across split families.}
 \label{fig:leakage}
 \end{figure}
@@ -293,7 +296,7 @@ resistance and variant-focused kinase work is often family-specific.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\linewidth]{../figures/mutation_family_delta.png}
+\includegraphics[width=0.85\linewidth]{mutation_family_delta.png}
 \caption{Variant-versus-wild-type activity deltas across major mutation
 families.}
 \label{fig:mutation}
@@ -312,11 +315,11 @@ external summary shows:
 \end{itemize}
 
 These numbers are worse than the in-domain Davis results, which is expected.
-They should be interpreted as a more honest estimate of transfer difficulty.
+They are best interpreted as a more honest estimate of transfer difficulty.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.75\linewidth]{../figures/external_validation_rmse.png}
+\includegraphics[width=0.75\linewidth]{external_validation_rmse.png}
 \caption{External validation RMSE on the BindingDB-derived kinase panel.}
 \label{fig:external}
 \end{figure}
@@ -327,7 +330,7 @@ They should be interpreted as a more honest estimate of transfer difficulty.
 \centering
 \begin{subfigure}{0.88\linewidth}
   \centering
-  \includegraphics[width=\linewidth]{../figures/split_rmse_comparison.png}
+  \includegraphics[width=\linewidth]{split_rmse_comparison.png}
   \caption{RMSE comparison.}
 \end{subfigure}
 
@@ -335,7 +338,7 @@ They should be interpreted as a more honest estimate of transfer difficulty.
 
 \begin{subfigure}{0.88\linewidth}
   \centering
-  \includegraphics[width=\linewidth]{../figures/split_spearman_comparison.png}
+  \includegraphics[width=\linewidth]{split_spearman_comparison.png}
   \caption{Spearman comparison.}
 \end{subfigure}
 \caption{Primary split-level benchmark summaries.}
@@ -344,18 +347,18 @@ They should be interpreted as a more honest estimate of transfer difficulty.
 
 \section{Discussion}
 
-The current evidence supports a stronger benchmark claim than a strongest-model
-claim. The repository does not support the simplistic statement that its
-primary model dominates every comparison. Instead, it supports a more credible
-conclusion: the benchmark is realistic enough to produce meaningful trade-offs,
-and the repository's \texttt{dual\_tower\_uq} model remains especially strong
-on several of the harder settings, even in the presence of competitive
-literature baselines.
+The current evidence supports a stronger benchmark claim than a universal
+strongest-model claim. The repository does not support the simplistic
+statement that its primary model dominates every comparison. Instead, it
+supports a more credible conclusion: the benchmark is realistic enough to
+produce meaningful trade-offs, and the repository's \texttt{dual\_tower\_uq}
+model remains especially strong on several of the harder settings, even in the
+presence of competitive literature baselines.
 
 This is arguably a better outcome for a benchmark paper. If every result
 favored the repository model by a large margin under every split, reviewers
 would reasonably ask whether the benchmark was tailored to the proposed method.
-Instead, the current outcome suggests that split design matters, model ranking
+The current outcome instead suggests that split design matters, model ranking
 depends on the evaluation regime, and realistic kinase prioritization should
 not be reduced to one easy holdout.
 
@@ -378,12 +381,13 @@ The most important scientist-facing files are:
 
 \section{Limitations}
 
-The current manuscript still has limitations. External validation artifacts are
-currently strongest for the repository baselines; extending the same external
-comparison to all literature baselines would further strengthen the story.
-Similarly, repeated-seed results and confidence intervals would improve the
-statistical presentation. These are strengthening steps rather than core
-benchmark blockers.
+The current manuscript still has limitations. The saved external-validation
+artifacts currently emphasize the repository baselines; extending the same
+external comparison to the literature baselines would strengthen the transfer
+story further. Repeated-seed results and confidence intervals would also
+improve the statistical presentation. Venue-specific formatting, references,
+and a finalized author list are still needed. These are polishing or
+strengthening steps rather than core benchmark blockers.
 
 \section{Conclusion}
 
