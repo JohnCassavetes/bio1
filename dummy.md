@@ -132,8 +132,6 @@ There is also another older comparison model called:
 
 - `DeepDTA`
 
-At the time of this note, `DeepDTA` has not yet been fully finished in the final benchmark.
-
 ## What do those model names mean in simple words?
 
 ### `ligand_only_ridge`
@@ -261,10 +259,11 @@ These files show the runs that actually happened.
 
 ## What do the current results say?
 
-Before `DeepDTA`, the main story is:
+Now that both literature baselines have been run, the main story is:
 
-- on the easy `random` split, `GraphDTA` is very competitive
-- on the harder splits, our main model still looks better overall
+- on the easier `random` split, `DeepDTA` is the strongest model right now
+- on the harder `cold_target` and `mutation_holdout` splits, our main model still looks best
+- on `sequence_identity`, `DeepDTA` is slightly better on one error measure, while our model is slightly better on ranking quality
 
 ## How do you read the results?
 
@@ -290,15 +289,16 @@ So if two models are close on `RMSE`, but one is better on `Spearman`, that can 
 
 Some key numbers:
 
-- `random`: `GraphDTA` RMSE `0.591`, `dual_tower_uq` RMSE `0.596`
-- `cold_target`: `GraphDTA` RMSE `0.690`, `dual_tower_uq` RMSE `0.597`
-- `sequence_identity`: `GraphDTA` RMSE `0.780`, `dual_tower_uq` RMSE `0.701`
-- `mutation_holdout`: `GraphDTA` RMSE `0.736`, `dual_tower_uq` RMSE `0.545`
+- `random`: `DeepDTA` RMSE `0.548`, `dual_tower_uq` RMSE `0.596`, `GraphDTA` RMSE `0.591`
+- `cold_target`: `dual_tower_uq` RMSE `0.597`, `DeepDTA` RMSE `0.614`, `GraphDTA` RMSE `0.690`
+- `sequence_identity`: `DeepDTA` RMSE `0.681`, `dual_tower_uq` RMSE `0.701`, `GraphDTA` RMSE `0.780`
+- `mutation_holdout`: `dual_tower_uq` RMSE `0.545`, `GraphDTA` RMSE `0.736`, `DeepDTA` RMSE `0.764`
 
 In simple words:
 
-- `GraphDTA` is not weak
-- but our main model still looks stronger when the task gets more realistic
+- `DeepDTA` and `GraphDTA` are both real and meaningful comparison models
+- our main model does not win every single number
+- but it still looks strongest on some of the harder and more realistic settings
 
 ## What do the split names mean?
 
@@ -341,7 +341,7 @@ The simple interpretation is:
 
 That is why our current result is encouraging.
 
-`GraphDTA` is competitive on the easier test, but our main model still holds up better on the tougher tests.
+`DeepDTA` is strongest on the easier test, but our main model still holds up very well on the tougher tests.
 
 That is a stronger result than just winning on an easy split.
 
@@ -395,28 +395,24 @@ Yes, it is much closer now.
 Before, it was more like a solid project.
 Now, it looks much more like a real paper candidate.
 
-The main missing piece is that `DeepDTA` still needs to be fully run if we want the strongest comparison package.
+Both main literature baselines are now run, which makes the benchmark much more credible.
 
 So the honest version is:
 
-> It is close to paper-ready, but one major comparison is still unfinished.
+> It now looks much closer to a real submission package, though the paper text still needs to be tightened to match the final results cleanly.
 
 ## What is left to do?
 
-The biggest remaining task is:
+The biggest remaining tasks are now:
 
-- finish the `DeepDTA` comparison run
-
-After that:
-
-- add those results into the main benchmark
-- regenerate the figures and tables
-- make sure the paper text matches the final result files
+- tighten the paper wording so it matches the final benchmark exactly
+- decide whether to add any extra optional validation, such as external literature-baseline runs
+- do final submission cleanup
 
 ## Very short summary
 
 We are building a tool that helps rank which molecules should be tested first for kinase targets.
 
-We improved it by making the tests more realistic, adding outside validation, and comparing against a strong known baseline.
+We improved it by making the tests more realistic, adding outside validation, and comparing against strong known literature baselines.
 
-So far, the results say our main model still looks strong, especially on the harder tests, and the project is much closer to being publishable.
+So far, the results say the benchmark is much stronger and more believable, and our main model still looks especially strong on some of the harder tests.

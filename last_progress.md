@@ -14,18 +14,20 @@ Current benchmark status:
 
 - repo-native baselines are complete
 - `graphdta_gcn_exact` has been fully run on the four main paper splits: `random`, `cold_target`, `sequence_identity`, and `mutation_holdout`
-- `GraphDTA` has been merged into `results/benchmark`, and the paper assets were regenerated from the merged benchmark outputs
+- `deepdta_exact` has been fully run on the same four main paper splits
+- both literature baselines have been merged into `results/benchmark`, and the paper assets were regenerated from the merged benchmark outputs
 - the current generated evidence is in `results/benchmark/summary.csv`, `results/benchmark_analysis/*`, `figures/*`, and `paper/generated_results.md`
 
 Current result takeaway:
 
-- `GraphDTA` is a legitimate literature-style comparison baseline and is competitive
-- the repo-native `dual_tower_uq` model still performs better overall on the harder splits, especially `cold_target`, `sequence_identity`, and `mutation_holdout`
-- `GraphDTA` narrowly edges `dual_tower_uq` on `random` RMSE, but not on the stronger overall benchmark story
+- both `GraphDTA` and `DeepDTA` are legitimate literature-style comparison baselines and are competitive
+- `DeepDTA` is currently strongest on the `random` split and also slightly ahead of `dual_tower_uq` on `sequence_identity` RMSE
+- the repo-native `dual_tower_uq` model still performs best on the harder `cold_target` and `mutation_holdout` settings and remains stronger on several ranking-oriented metrics
+- the benchmark story is now much stronger because the main claims are backed by completed exact literature reruns rather than only repo-native baselines
 
 What is still missing:
 
-- `deepdta_exact` has not yet been fully run and frozen under the same four-split protocol
-- the manuscript should either wait for `DeepDTA` or be edited so it does not claim both literature baselines are already complete
+- the manuscript text should be tightened to reflect the full five-model benchmark results, especially the fact that `DeepDTA` is now a strong competitor on `random` and `sequence_identity`
+- if desired, external validation could be extended to the literature baselines too, but that is now a strengthening step rather than a core benchmark blocker
 
-So the project is now meaningfully closer to submission. The main remaining decision is whether to finish `DeepDTA` for the safest comparison package, or narrow the paper claims to the evidence that already exists.
+So the project is now materially closer to submission. The core benchmark package is in place, and the main remaining work is paper polish plus any optional extra validation runs.

@@ -7,20 +7,20 @@ All tables below are generated from result files under `results/`.
 split,model,rmse,spearman,roc_auc,mean_per_target_spearman
 cold_target,dual_tower_uq,0.597,0.587,0.899,0.571
 mutation_holdout,dual_tower_uq,0.545,0.818,0.971,0.714
-random,graphdta_gcn_exact,0.591,0.61,0.892,0.579
-sequence_identity,dual_tower_uq,0.701,0.461,0.809,0.493
+random,deepdta_exact,0.548,0.658,0.92,0.634
+sequence_identity,deepdta_exact,0.681,0.446,0.805,0.446
 
-split,dual_tower_uq,graphdta_gcn_exact,ridge_ensemble
-cold_target,0.597,0.69,0.73
-mutation_holdout,0.545,0.736,1.158
-random,0.596,0.591,0.768
-sequence_identity,0.701,0.78,0.714
+split,deepdta_exact,dual_tower_uq,graphdta_gcn_exact,ridge_ensemble
+cold_target,0.614,0.597,0.69,0.73
+mutation_holdout,0.764,0.545,0.736,1.158
+random,0.548,0.596,0.591,0.768
+sequence_identity,0.681,0.701,0.78,0.714
 
-split,dual_tower_uq,graphdta_gcn_exact,ridge_ensemble
-cold_target,0.587,0.478,0.456
-mutation_holdout,0.818,0.749,0.463
-random,0.634,0.61,0.486
-sequence_identity,0.461,0.385,0.43
+split,deepdta_exact,dual_tower_uq,graphdta_gcn_exact,ridge_ensemble
+cold_target,0.563,0.587,0.478,0.456
+mutation_holdout,0.739,0.818,0.749,0.463
+random,0.658,0.634,0.61,0.486
+sequence_identity,0.446,0.461,0.385,0.43
 
 split,test_targets,mean_nearest_train_identity,median_nearest_train_identity,max_nearest_train_identity
 both_new,65,0.571,0.532,1.0
@@ -32,18 +32,18 @@ scaffold,442,1.0,1.0,1.0
 sequence_identity,59,0.367,0.391,0.581
 
 model,mutation_family,rows,targets,variant_targets,wildtype_train_rows,wildtype_train_targets,rmse,spearman,variant_mean_p_activity,wildtype_train_mean_p_activity,variant_minus_wildtype_p_activity,mean_nearest_train_identity
+deepdta_exact,LRRK2,68,1,1,68,1,0.488,0.752,5.567,5.544,0.023,1.0
+deepdta_exact,PIK3CA,612,9,9,68,1,0.624,0.428,5.173,5.179,-0.005,1.0
+deepdta_exact,FLT3,408,6,6,68,1,0.821,0.776,6.23,6.358,-0.128,1.0
+deepdta_exact,BRAF,68,1,1,68,1,0.83,0.357,5.417,5.359,0.058,1.0
+deepdta_exact,KIT,476,7,7,68,1,0.854,0.812,6.257,6.563,-0.306,1.0
+deepdta_exact,MET,136,2,2,68,1,0.893,0.631,5.583,5.59,-0.007,1.0
 dual_tower_uq,PIK3CA,612,9,9,68,1,0.15,0.458,5.173,5.179,-0.005,1.0
 dual_tower_uq,LRRK2,68,1,1,68,1,0.334,0.819,5.567,5.544,0.023,1.0
 dual_tower_uq,BRAF,68,1,1,68,1,0.389,0.75,5.417,5.359,0.058,1.0
 dual_tower_uq,MET,136,2,2,68,1,0.411,0.834,5.583,5.59,-0.007,1.0
 dual_tower_uq,FLT3,408,6,6,68,1,0.52,0.903,6.23,6.358,-0.128,1.0
 dual_tower_uq,KIT,476,7,7,68,1,0.871,0.817,6.257,6.563,-0.306,1.0
-graphdta_gcn_exact,LRRK2,68,1,1,68,1,0.465,0.769,5.567,5.544,0.023,1.0
-graphdta_gcn_exact,PIK3CA,612,9,9,68,1,0.598,0.386,5.173,5.179,-0.005,1.0
-graphdta_gcn_exact,FLT3,408,6,6,68,1,0.766,0.754,6.23,6.358,-0.128,1.0
-graphdta_gcn_exact,BRAF,68,1,1,68,1,0.79,0.565,5.417,5.359,0.058,1.0
-graphdta_gcn_exact,KIT,476,7,7,68,1,0.843,0.798,6.257,6.563,-0.306,1.0
-graphdta_gcn_exact,MET,136,2,2,68,1,0.873,0.633,5.583,5.59,-0.007,1.0
 
 evaluation,model,rows,targets,rmse,spearman,roc_auc,prediction_interval_95_coverage,mean_prediction_std,mean_per_target_spearman,mean_top_10pct_enrichment,mean_per_target_roc_auc
 davis_to_external,dual_tower_uq,1617,8,1.484,0.245,0.602,0.987,3.954,0.342,1.499,0.683
