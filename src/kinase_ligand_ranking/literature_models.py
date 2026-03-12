@@ -9,6 +9,7 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 import numpy as np
 import pandas as pd
 from rdkit import Chem
+from rdkit.Chem import rdchem
 
 try:
     import torch
@@ -665,17 +666,20 @@ def _graphdta_dataframe_to_data_list(
     max_seq_len: int,
 ) -> List[Data]:
     data_list: List[Data] = []
+    sequence_cache: Dict[str, torch.Tensor] = {}
     for row in df.itertuples(index=False):
         c_size, features, edge_index = graph_cache[str(row.smiles)]
+        target_sequence = str(row.target_sequence)
+        if target_sequence not in sequence_cache:
+            sequence_cache[target_sequence] = torch.from_numpy(
+                _encode_graphdta_sequence(target_sequence, max_seq_len)
+            ).unsqueeze(0)
         graph_data = Data(
             x=torch.tensor(features, dtype=torch.float32),
             edge_index=torch.tensor(edge_index, dtype=torch.long).t().contiguous(),
             y=torch.tensor([float(row.p_activity)], dtype=torch.float32),
         )
-        graph_data.target = torch.tensor(
-            [_encode_graphdta_sequence(str(row.target_sequence), max_seq_len)],
-            dtype=torch.long,
-        )
+        graph_data.target = sequence_cache[target_sequence]
         graph_data.c_size = torch.tensor([c_size], dtype=torch.long)
         data_list.append(graph_data)
     return data_list
@@ -722,7 +726,7 @@ def _graphdta_atom_features(atom) -> np.ndarray:
         _one_of_k_encoding_unk(atom.GetSymbol(), GRAPHDTA_ATOM_SYMBOLS)
         + _one_of_k_encoding(atom.GetDegree(), list(range(11)))
         + _one_of_k_encoding_unk(atom.GetTotalNumHs(), list(range(11)))
-        + _one_of_k_encoding_unk(atom.GetImplicitValence(), list(range(11)))
+        + _one_of_k_encoding_unk(atom.GetValence(rdchem.ValenceType.IMPLICIT), list(range(11)))
         + [atom.GetIsAromatic()],
         dtype=np.float32,
     )
