@@ -10,10 +10,13 @@
 \usepackage{array}
 \usepackage{hyperref}
 \usepackage{enumitem}
+\usepackage[affil-it]{authblk}
 \graphicspath{{img/}}
 
 \title{Beyond the Easy Test: Realistic Benchmarking for Kinase Drug Discovery}
-\author{}
+\author[1]{JG}
+\author[1]{VG}
+\affil[1]{Independent Research}
 \date{}
 
 \begin{document}
@@ -23,10 +26,10 @@
 Drug--target affinity work for kinases is often evaluated on optimistic
 interaction-level splits and summarized with aggregate error metrics that do
 not directly answer the candidate-prioritization question faced by
-experimentalists. We present KinBench-UQ, an artifact-backed benchmark for
-kinase--ligand prioritization that combines exact sequence-identity-aware
+experimentalists. We present KinBench-UQ, a benchmark and analysis framework
+for kinase--ligand prioritization that combines exact sequence-identity-aware
 splitting, mutation-family analysis, external validation, literature-style
-reproductions, and generated paper artifacts. The current benchmark compares
+reproductions, and generated paper artifacts. We compare
 five models under a shared protocol: \texttt{ligand\_only\_ridge},
 \texttt{ridge\_ensemble}, \texttt{dual\_tower\_uq}, \texttt{deepdta\_exact},
 and \texttt{graphdta\_gcn\_exact}. The results show a nontrivial trade-off
@@ -39,6 +42,10 @@ generated from saved result artifacts under \texttt{results/} rather than
 typed manually into the manuscript.
 \end{abstract}
 
+\noindent\textbf{Keywords:} kinase benchmarking; drug--target affinity;
+candidate prioritization; sequence identity; mutation generalization; external
+validation
+
 \section{Introduction}
 
 Kinase inhibitor discovery is not only a regression problem. In practice, a
@@ -48,7 +55,7 @@ are not cleanly represented by the training distribution. Standard DTA
 benchmarks such as Davis and KIBA have been useful for model development, but
 they also encourage a narrow evaluation habit: optimize a global error metric
 under a split that may retain substantial target similarity between training
-and test sets.
+and test sets~\cite{davis_dataset,kiba_dataset}.
 
 KinBench-UQ is built around a stricter and more scientist-facing question:
 
@@ -59,24 +66,25 @@ compounds, and how reproducible is the resulting evidence?
 
 KinBench-UQ contributes on two axes. First, it provides a target-aware
 benchmark with realistic split families, leakage analysis, mutation-family
-analysis, and external validation. Second, it packages that benchmark in an
-artifact-reproducible form: the result summaries, figures, and manuscript
-artifacts are generated directly from versioned result files.
+analysis, and external validation. Second, it provides a reproducible evidence
+pipeline in which the result summaries, figures, and manuscript artifacts are
+generated directly from versioned result files.
 
 \subsection{Relationship to TDC}
 
 KinBench-UQ is intended as a complement to Therapeutics Data Commons (TDC),
-not as a replacement. TDC provides broad therapeutic machine-learning coverage,
-standardized tasks, and reusable split infrastructure across many biomedical
-settings~\cite{tdc_paper,tdc_site,tdc_splits,tdc_dti}. KinBench-UQ addresses a
-more specialized question: for kinase-focused candidate prioritization, how
-much target-similarity leakage remains under standard cold-target style
-evaluation, and what changes when the benchmark enforces exact
-sequence-identity-aware splitting?
+not as a replacement. TDC provides broad therapeutic machine-learning coverage
+across many biomedical settings~\cite{tdc_paper,tdc_site}, along with
+standardized task and split interfaces for drug--target interaction
+benchmarks~\cite{tdc_splits,tdc_dti}. KinBench-UQ addresses a more specialized
+question: for kinase-focused candidate prioritization, how much
+target-similarity leakage remains under standard cold-target style evaluation,
+and what changes when the benchmark enforces exact sequence-identity-aware
+splitting?
 
 This framing is important. The claim is not that broad frameworks are wrong.
 The claim is that kinase-focused evaluation exposes a gap that broad cold-start
-protocols do not necessarily surface on their own. In the current benchmark,
+protocols do not necessarily surface on their own. In our benchmark,
 the cold-target split retains a mean nearest-train sequence identity of 0.571
 and a maximum of 1.000, whereas the sequence-identity split reduces these
 values to 0.367 and 0.581, respectively. We therefore present the leakage
@@ -104,14 +112,15 @@ values are standardized into
 while the original assay family is preserved explicitly in
 \texttt{affinity\_type}. This is important because the benchmark is designed to
 support future mixed-assay extensions without silently mislabeling the target
-variable.
+variable~\cite{davis_dataset}.
 
 \subsection{External Validation Dataset}
 
 The external test set is built from BindingDB-derived kinase measurements,
-processed into the same schema as Davis. The current external panel contains
+with target metadata harmonized through UniProt before processing into the same
+schema as Davis~\cite{bindingdb,uniprot}. The external panel contains
 1,617 rows, 8 targets, and 1,296 unique ligands after cleaning and
-deduplication. The current external build retains \texttt{KD} measurements for
+deduplication. The external build retains \texttt{KD} measurements for
 closer comparability to Davis.
 
 \section{Benchmark Design}
@@ -126,7 +135,7 @@ families that probe different forms of generalization.
 
 \subsection{Primary Split Families}
 
-The current paper focuses on four primary split families:
+We focus on four primary split families:
 
 \begin{itemize}[leftmargin=1.5em]
   \item \textbf{Random}: standard interaction-level holdout.
@@ -140,12 +149,14 @@ The current paper focuses on four primary split families:
 \subsection{Exact Sequence-Identity Control}
 
 The sequence-identity split is a central design choice. Earlier versions of the
-repository used a proxy similarity score. The current benchmark replaces that
-with exact global pairwise alignment identity and stores the resulting identity
-table and cluster assignments under the benchmark artifacts. The generated
-leakage summary shows that the mean nearest-train identity on this split falls
-to 0.367, with a maximum of 0.581, whereas several easier splits still admit
-exact or near-exact target neighbors.
+benchmark used a proxy similarity score. The benchmark presented here instead uses
+exact global pairwise alignment identity, implemented through Biopython's
+alignment tooling built on the classical Needleman--Wunsch formulation, and
+stores the resulting identity table and cluster assignments under the benchmark
+artifacts~\cite{needleman_wunsch,biopython}. The generated leakage summary
+shows that the mean nearest-train identity on this split falls to 0.367, with
+a maximum of 0.581, whereas several easier splits still admit exact or
+near-exact target neighbors.
 
 \section{Compared Models}
 
@@ -155,17 +166,18 @@ Five models are compared under a common benchmark runner.
   \item \texttt{ligand\_only\_ridge}: a simple molecule-only baseline.
   \item \texttt{ridge\_ensemble}: a classical target-aware baseline using
   ligand and target features.
-  \item \texttt{dual\_tower\_uq}: the main repository model with explicit
+  \item \texttt{dual\_tower\_uq}: the principal model evaluated in this study,
+  with explicit
   ligand-side and target-side representations plus predictive uncertainty.
-  \item \texttt{deepdta\_exact}: a literature-style DeepDTA reproduction run
-  under the repository protocol.
-  \item \texttt{graphdta\_gcn\_exact}: a literature-style GraphDTA reproduction
-  run under the same protocol.
+  \item \texttt{deepdta\_exact}: a literature-style reproduction of
+  DeepDTA~\cite{deepdta} run under the benchmark protocol.
+  \item \texttt{graphdta\_gcn\_exact}: a literature-style reproduction of
+  GraphDTA~\cite{graphdta} run under the same protocol.
 \end{enumerate}
 
-\subsection{Repository Model}
+\subsection{Proposed Model}
 
-The repository model is implemented in
+Our proposed model is implemented in
 \texttt{src/kinase\_ligand\_ranking/neural\_modeling.py} as
 \texttt{DualTowerUncertaintyRanker}. It combines
 
@@ -177,17 +189,17 @@ The repository model is implemented in
   \item interaction features formed from ligand--target projected products.
 \end{itemize}
 
-These features are consumed by an \texttt{ExtraTreesRegressor}. Predictive
+These features are consumed by an \texttt{ExtraTreesRegressor}~\cite{extra_trees}. Predictive
 uncertainty is derived from per-tree prediction spread and calibrated on the
 validation split.
 
 \subsection{Feature Construction}
 
-The repository feature pipeline, implemented in
+The feature pipeline used in this study, implemented in
 \texttt{src/kinase\_ligand\_ranking/features.py}, encodes each row using:
 
 \begin{itemize}[leftmargin=1.5em]
-  \item 1024-bit Morgan fingerprints for ligands,
+  \item 1024-bit Morgan fingerprints generated with RDKit~\cite{ecfp,rdkit},
   \item amino-acid composition and sequence summary statistics for targets,
   \item one-hot assay-type features,
   \item one-hot source features.
@@ -196,9 +208,9 @@ The repository feature pipeline, implemented in
 \subsection{Why Literature Baselines Matter}
 
 The literature baselines are included to prevent the benchmark from collapsing
-into ``our model on our preferred split.'' Running DeepDTA and GraphDTA under
-the same protocol is materially stronger than quoting incompatible numbers from
-older papers.
+into ``our model on our preferred split.'' Evaluating DeepDTA and GraphDTA
+under the same protocol is materially stronger than quoting incompatible
+numbers from their original papers alone~\cite{deepdta,graphdta}.
 
 \section{Evaluation Protocol}
 
@@ -219,7 +231,7 @@ candidate-prioritization use case because it reflects ranking quality.
 
 \subsection{Secondary Analyses}
 
-In addition to split-level metrics, the repository exports:
+In addition to split-level metrics, we report:
 
 \begin{itemize}[leftmargin=1.5em]
   \item nearest-train identity leakage summaries,
@@ -230,7 +242,7 @@ In addition to split-level metrics, the repository exports:
 
 \subsection{Reproducibility Path}
 
-The intended reproducibility path is:
+The analysis workflow is:
 
 \begin{enumerate}[leftmargin=1.5em]
   \item create the pinned Python 3.12 environment via
@@ -243,19 +255,16 @@ The intended reproducibility path is:
   \texttt{scripts/generate\_paper\_assets.py}.
 \end{enumerate}
 
-The shortest command path is
-\texttt{python scripts/run\_submission\_pipeline.py --device cpu}, while the
-step-by-step path is documented in \texttt{docs/reproduce\_paper.md}.
-The strongest reproducibility guarantee in the current repository is therefore
-at the artifact level: saved CSV, JSON, and figure outputs are versioned and
-can be regenerated from the processed dataset and benchmark scripts, while the
-initial raw-data acquisition still depends on public external sources.
+The codebase provides both a one-command execution path and a stepwise
+reproduction path. Saved CSV, JSON, and figure outputs are versioned and can be
+regenerated from the processed dataset and benchmark scripts, while the initial
+raw-data acquisition depends on public external sources.
 
 \section{Results}
 
 \subsection{Main Benchmark Results}
 
-Table~\ref{tab:main-results} summarizes the current four-split comparison. All
+Table~\ref{tab:main-results} summarizes the four primary split families. All
 five models are run under the common benchmark runner, but for readability the
 main manuscript table highlights the three strongest models on each primary
 split. The full five-model summaries remain available in the generated result
@@ -266,7 +275,7 @@ regimes.
 \begin{table}[H]
 \centering
 \caption{Main benchmark results on the four primary split families, showing the
-three strongest models on each split by current saved results. Lower RMSE is
+three strongest models on each split in the saved benchmark outputs. Lower RMSE is
 better. Higher Spearman is better.}
 \label{tab:main-results}
 \begin{tabular}{llcc}
@@ -313,14 +322,19 @@ convincing generalization test than standard random holdout alone.
 and the exact sequence-identity split. Lower nearest-train identity indicates
 stricter target separation.}
 \label{tab:split-gap}
+\setlength{\tabcolsep}{4pt}
+\small
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lcccc}
 \toprule
-Split & Mean nearest-train identity & Max nearest-train identity & Best RMSE & Best Spearman \\
+Split & \shortstack{Mean nearest-train\\identity} & \shortstack{Max nearest-train\\identity} & Best RMSE & Best Spearman \\
 \midrule
 Cold-target & 0.571 & 1.000 & 0.597 & 0.587 \\
 Sequence-identity & 0.367 & 0.581 & 0.681 & 0.461 \\
 \bottomrule
 \end{tabular}
+}
+\normalsize
 \end{table}
 
 Table~\ref{tab:split-gap} makes the complement-to-TDC interpretation concrete.
@@ -339,7 +353,7 @@ similarity-aware protocol in addition to broader cold-start benchmarking.
 \subsection{Mutation-Family Analysis}
 
 The mutation-family table shows that aggregate performance hides meaningful
-family-level variation. The repository model is especially strong on several
+family-level variation. Our model is especially strong on several
 families, including PIK3CA (RMSE 0.150), LRRK2 (0.334), BRAF (0.389), MET
 (0.411), and FLT3 (0.520). In contrast, both literature baselines degrade more
 substantially on multiple family groups. This is practically important because
@@ -356,8 +370,8 @@ families.}
 \subsection{External Validation}
 
 External validation on the BindingDB-derived kinase panel is harder than
-in-domain Davis testing, but it is also more realistic. The current generated
-external summary shows:
+in-domain Davis testing, but it is also more realistic. The external summary
+shows:
 
 \begin{itemize}[leftmargin=1.5em]
   \item \texttt{deepdta\_exact}: RMSE 1.342, mean per-target Spearman 0.361
@@ -369,8 +383,8 @@ external summary shows:
 
 These numbers are worse than the in-domain Davis results, which is expected.
 They are best interpreted as a more honest estimate of transfer difficulty. The
-updated external comparison also shows that the literature baselines do not
-simply collapse out of domain: \texttt{deepdta\_exact} is currently the
+external comparison also shows that the literature baselines do not simply
+collapse out of domain: \texttt{deepdta\_exact} is the
 strongest model on the external panel, while \texttt{dual\_tower\_uq} remains
 competitive and clearly stronger than the simpler ridge baselines.
 
@@ -404,59 +418,142 @@ competitive and clearly stronger than the simpler ridge baselines.
 
 \section{Discussion}
 
-The current evidence supports a stronger benchmark claim than a universal
-strongest-model claim. The repository does not support the simplistic
-statement that its primary model dominates every comparison. Instead, it
-supports a more credible conclusion: the benchmark is realistic enough to
-produce meaningful trade-offs, and the repository's \texttt{dual\_tower\_uq}
-model remains especially strong on several of the harder settings, even in the
-presence of competitive literature baselines.
+Our results support a stronger benchmark claim than a universal
+strongest-model claim. The evidence does not support the simplistic
+statement that one method dominates every comparison. Instead, it supports a
+more credible conclusion: the benchmark is realistic enough to produce
+meaningful trade-offs, and \texttt{dual\_tower\_uq} remains especially strong
+on several of the harder settings, even in the presence of competitive
+literature baselines.
 
 This is arguably a better outcome for a benchmark paper. If every result
-favored the repository model by a large margin under every split, reviewers
+favored our primary model by a large margin under every split, reviewers
 would reasonably ask whether the benchmark was tailored to the proposed method.
-The current outcome instead suggests that split design matters, model ranking
+The observed outcome instead suggests that split design matters, model ranking
 depends on the evaluation regime, and realistic kinase prioritization should
 not be reduced to one easy holdout.
 
-\section{Repository Map}
-
-The most important scientist-facing files are:
-
-\begin{itemize}[leftmargin=1.5em]
-  \item \texttt{scripts/run\_benchmark\_suite.py}: main benchmark runner
-  \item \texttt{scripts/run\_external\_validation.py}: external validation
-  runner
-  \item \texttt{scripts/generate\_benchmark\_splits.py}: split generation
-  \item \texttt{scripts/generate\_paper\_assets.py}: generated tables and
-  figures
-  \item \texttt{src/kinase\_ligand\_ranking/neural\_modeling.py}: repository
-  model implementation
-  \item \texttt{src/kinase\_ligand\_ranking/literature\_models.py}: DeepDTA and
-  GraphDTA reproductions
-\end{itemize}
-
 \section{Limitations}
 
-The current manuscript still has limitations. The saved external-validation
-artifacts now include the literature baselines as well, but repeated-seed
-results and confidence intervals would still improve the statistical
-presentation. Venue-specific formatting, references, and a finalized author
-list are also still needed. These are polishing or strengthening steps rather
-than core benchmark blockers.
+Our study has limitations. Although the external-validation analyses include
+the literature baselines, repeated-seed experiments and confidence intervals
+would strengthen the statistical presentation. The benchmark is also focused on
+kinases and therefore does not by itself establish generality across all
+protein families or assay regimes.
 
 \section{Conclusion}
 
-KinBench-UQ is now more than a baseline repository. It provides a reproducible
-evaluation stack for kinase candidate prioritization, with exact
-sequence-identity-aware splitting, mutation-family analysis, external
-validation, literature-style reproductions, and generated manuscript evidence.
-The current results show that the benchmark meaningfully differentiates models:
+KinBench-UQ provides an evaluation framework for kinase candidate
+prioritization, with exact sequence-identity-aware splitting, mutation-family
+analysis, external validation, literature-style reproductions, and generated
+publication figures and tables.
+Our results show that the benchmark meaningfully differentiates models:
 \texttt{deepdta\_exact} is strongest on easier settings, while
 \texttt{dual\_tower\_uq} is particularly strong on several harder and more
 scientist-relevant evaluation regimes.
 
-\begin{thebibliography}{9}
+\section*{Data and Code Availability}
+
+The code and generated artifacts for this study are publicly available at
+\url{https://github.com/JohnCassavetes/bio1}. All benchmark summaries,
+external-validation summaries, generated figures, and paper-facing evidence
+tables discussed in this manuscript are stored under \path{results/},
+\path{figures/}, and \path{paper/}. The main executable entry points are
+\path{scripts/run_benchmark_suite.py},
+\path{scripts/run_external_validation.py},
+\path{scripts/generate_benchmark_splits.py}, and
+\path{scripts/generate_paper_assets.py}. The implementation of
+\texttt{dual\_tower\_uq} is provided in
+\path{src/kinase_ligand_ranking/neural_modeling.py}, and the
+literature-style reproductions are implemented in
+\path{src/kinase_ligand_ranking/literature_models.py}.
+
+\section*{Funding}
+
+This work received no specific external funding and was conducted as
+independent research.
+
+\section*{Competing Interests}
+
+The authors declare no competing interests.
+
+\begin{thebibliography}{15}
+
+\bibitem{davis_dataset}
+Davis, M.I., Hunt, J.P., Herrgard, S., Ciceri, P., Wodicka, L.M.,
+Pallares, G., Hocker, M., Treiber, D.K., and Zarrinkar, P.P.
+\newblock Comprehensive analysis of kinase inhibitor selectivity.
+\newblock \emph{Nature Biotechnology}, 29:1046--1051, 2011.
+\newblock \url{https://doi.org/10.1038/nbt.1990}
+
+\bibitem{kiba_dataset}
+Tang, J., Szwajda, A., Shakyawar, S., Xu, T., Hintsanen, P., Wennerberg, K.,
+and Aittokallio, T.
+\newblock Making sense of large-scale kinase inhibitor bioactivity data sets:
+a comparative and integrative analysis.
+\newblock \emph{Journal of Chemical Information and Modeling}, 54(3):735--743,
+2014.
+\newblock \url{https://doi.org/10.1021/ci400709d}
+
+\bibitem{bindingdb}
+Gilson, M.K., Liu, T., Baitaluk, M., Nicola, G., Hwang, L., and Chong, J.
+\newblock BindingDB in 2015: a public database for medicinal chemistry,
+computational chemistry and systems pharmacology.
+\newblock \emph{Nucleic Acids Research}, 44(D1):D1045--D1053, 2016.
+\newblock \url{https://doi.org/10.1093/nar/gkv1072}
+
+\bibitem{uniprot}
+The UniProt Consortium.
+\newblock UniProt: the Universal Protein Knowledgebase in 2025.
+\newblock \emph{Nucleic Acids Research}, 53(D1):D609--D617, 2025.
+\newblock \url{https://doi.org/10.1093/nar/gkae1010}
+
+\bibitem{deepdta}
+\"{O}zt\"{u}rk, H., \"{O}zg\"{u}r, A., and Ozkirimli, E.
+\newblock DeepDTA: deep drug--target binding affinity prediction.
+\newblock \emph{Bioinformatics}, 34(17):i821--i829, 2018.
+\newblock \url{https://doi.org/10.1093/bioinformatics/bty593}
+
+\bibitem{graphdta}
+Nguyen, T., Le, H., Quinn, T.P., Nguyen, T., Le, T.D., and Venkatesh, S.
+\newblock GraphDTA: predicting drug-target binding affinity with graph neural
+networks.
+\newblock \emph{Bioinformatics}, 37(8):1140--1147, 2021.
+\newblock \url{https://doi.org/10.1093/bioinformatics/btaa921}
+
+\bibitem{ecfp}
+Rogers, D. and Hahn, M.
+\newblock Extended-connectivity fingerprints.
+\newblock \emph{Journal of Chemical Information and Modeling}, 50(5):742--754,
+2010.
+\newblock \url{https://doi.org/10.1021/ci100050t}
+
+\bibitem{rdkit}
+Landrum, G. et al.
+\newblock RDKit: Open-source cheminformatics software.
+\newblock \url{https://www.rdkit.org/}
+\newblock Accessed 13 March 2026.
+
+\bibitem{extra_trees}
+Geurts, P., Ernst, D., and Wehenkel, L.
+\newblock Extremely randomized trees.
+\newblock \emph{Machine Learning}, 63:3--42, 2006.
+\newblock \url{https://doi.org/10.1007/s10994-006-6226-1}
+
+\bibitem{needleman_wunsch}
+Needleman, S.B. and Wunsch, C.D.
+\newblock A general method applicable to the search for similarities in the
+amino acid sequence of two proteins.
+\newblock \emph{Journal of Molecular Biology}, 48(3):443--453, 1970.
+\newblock \url{https://doi.org/10.1016/0022-2836(70)90057-4}
+
+\bibitem{biopython}
+Cock, P.J.A., Antao, T., Chang, J.T., Chapman, B.A., Cox, C.J., Dalke, A.,
+Friedberg, I., Hamelryck, T., Kauff, F., Wilczynski, B., and de Hoon, M.J.L.
+\newblock Biopython: freely available Python tools for computational molecular
+biology and bioinformatics.
+\newblock \emph{Bioinformatics}, 25(11):1422--1423, 2009.
+\newblock \url{https://doi.org/10.1093/bioinformatics/btp163}
 
 \bibitem{tdc_paper}
 Kexin Huang, Tianfan Fu, Wenhao Gao, Yue Zhao, Yusuf Roohani, Jure Leskovec,
