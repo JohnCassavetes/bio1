@@ -23,7 +23,7 @@
 Drug--target affinity work for kinases is often evaluated on optimistic
 interaction-level splits and summarized with aggregate error metrics that do
 not directly answer the candidate-prioritization question faced by
-experimentalists. We present KinBench-UQ, a reproducible benchmark for
+experimentalists. We present KinBench-UQ, an artifact-backed benchmark for
 kinase--ligand prioritization that combines exact sequence-identity-aware
 splitting, mutation-family analysis, external validation, literature-style
 reproductions, and generated paper artifacts. The current benchmark compares
@@ -59,9 +59,9 @@ compounds, and how reproducible is the resulting evidence?
 
 KinBench-UQ contributes on two axes. First, it provides a target-aware
 benchmark with realistic split families, leakage analysis, mutation-family
-analysis, and external validation. Second, it packages that benchmark in a
-reproducible form: the result summaries, figures, and manuscript artifacts are
-generated directly from versioned result files.
+analysis, and external validation. Second, it packages that benchmark in an
+artifact-reproducible form: the result summaries, figures, and manuscript
+artifacts are generated directly from versioned result files.
 
 \subsection{Relationship to TDC}
 
@@ -246,19 +246,28 @@ The intended reproducibility path is:
 The shortest command path is
 \texttt{python scripts/run\_submission\_pipeline.py --device cpu}, while the
 step-by-step path is documented in \texttt{docs/reproduce\_paper.md}.
+The strongest reproducibility guarantee in the current repository is therefore
+at the artifact level: saved CSV, JSON, and figure outputs are versioned and
+can be regenerated from the processed dataset and benchmark scripts, while the
+initial raw-data acquisition still depends on public external sources.
 
 \section{Results}
 
 \subsection{Main Benchmark Results}
 
-Table~\ref{tab:main-results} summarizes the current four-split comparison. The
-main result is not a trivial single-model win, but a meaningful trade-off
-landscape across evaluation regimes.
+Table~\ref{tab:main-results} summarizes the current four-split comparison. All
+five models are run under the common benchmark runner, but for readability the
+main manuscript table highlights the three strongest models on each primary
+split. The full five-model summaries remain available in the generated result
+artifacts under \texttt{results/benchmark/}. The main result is not a trivial
+single-model win, but a meaningful trade-off landscape across evaluation
+regimes.
 
 \begin{table}[H]
 \centering
-\caption{Main benchmark results on the four primary split families. Lower RMSE
-is better. Higher Spearman is better.}
+\caption{Main benchmark results on the four primary split families, showing the
+three strongest models on each split by current saved results. Lower RMSE is
+better. Higher Spearman is better.}
 \label{tab:main-results}
 \begin{tabular}{llcc}
 \toprule
