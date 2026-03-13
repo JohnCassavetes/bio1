@@ -5,7 +5,7 @@
 \usepackage{float}
 \usepackage{hyperref}
 
-\title{KinBench-UQ: Methods and Results Draft}
+\title{Beyond the Easy Test: Realistic Benchmarking for Kinase Drug Discovery}
 \author{}
 \date{}
 
@@ -168,17 +168,15 @@ alone.
 \subsection{External Validation}
 
 External validation remains substantially harder than in-domain Davis testing.
-Among the currently generated external runs, \texttt{dual\_tower\_uq} attains
-RMSE 1.484 and mean per-target Spearman 0.342 on the BindingDB-derived
-evaluation set, compared with RMSE 1.602 and 1.641 for the target-aware ridge
-ensemble and ligand-only ridge baselines, respectively. These numbers are worse
-than the in-domain Davis results, but they are more scientifically credible for
-a candidate-prioritization claim.
-
-At present, the external validation summary includes the repository baselines
-only. Extending the external protocol to the literature baselines would further
-strengthen the paper, but the core benchmark comparison on the four primary
-splits is already complete.
+Among the currently generated external runs, \texttt{deepdta\_exact} attains
+the strongest performance on the BindingDB-derived evaluation set with RMSE
+1.342 and mean per-target Spearman 0.361. The repository model
+\texttt{dual\_tower\_uq} follows with RMSE 1.484 and mean per-target Spearman
+0.342, while \texttt{graphdta\_gcn\_exact} reaches RMSE 1.538 and mean
+per-target Spearman 0.138. The ridge baselines are weaker still, with RMSE
+1.602 for the target-aware ridge ensemble and 1.641 for the ligand-only ridge
+baseline. These numbers are worse than the in-domain Davis results, but they
+are more scientifically credible for a candidate-prioritization claim.
 
 \subsection{Interpretation}
 

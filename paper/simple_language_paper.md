@@ -1,4 +1,4 @@
-# KinBench-UQ in Simple Language
+# Beyond the Easy Test: Realistic Benchmarking for Kinase Drug Discovery
 
 ## What problem are we trying to solve?
 
@@ -211,11 +211,20 @@ That is a harder and more realistic check than staying inside Davis.
 
 On this outside test:
 
+- `DeepDTA` reached RMSE `1.342`
 - `dual_tower_uq` reached RMSE `1.484`
+- `GraphDTA` reached RMSE `1.538`
 - `ridge_ensemble` reached RMSE `1.602`
 - `ligand_only_ridge` reached RMSE `1.641`
 
-The external scores are worse than the in-domain ones, which is expected. But they are also more honest about how hard generalization really is.
+So on the current outside test:
+
+- `DeepDTA` is the strongest model
+- `dual_tower_uq` is still competitive
+- the external setting is much harder than the in-domain benchmark
+
+The external scores are worse than the in-domain ones, which is expected. But
+they are also more honest about how hard generalization really is.
 
 ## Why should someone trust these claims?
 

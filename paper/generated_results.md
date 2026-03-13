@@ -46,7 +46,9 @@ dual_tower_uq,FLT3,408,6,6,68,1,0.52,0.903,6.23,6.358,-0.128,1.0
 dual_tower_uq,KIT,476,7,7,68,1,0.871,0.817,6.257,6.563,-0.306,1.0
 
 evaluation,model,rows,targets,rmse,spearman,roc_auc,prediction_interval_95_coverage,mean_prediction_std,mean_per_target_spearman,mean_top_10pct_enrichment,mean_per_target_roc_auc
+davis_to_external,deepdta_exact,1617,8,1.342,0.37,0.725,,,0.361,1.489,0.775
 davis_to_external,dual_tower_uq,1617,8,1.484,0.245,0.602,0.987,3.954,0.342,1.499,0.683
+davis_to_external,graphdta_gcn_exact,1617,8,1.538,0.096,0.627,,,0.138,1.353,0.597
 davis_to_external,ridge_ensemble,1617,8,1.602,0.071,0.514,0.685,0.824,0.155,1.37,0.605
 davis_to_external,ligand_only_ridge,1617,8,1.641,0.129,0.602,0.566,0.608,0.166,1.366,0.611
 

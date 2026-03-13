@@ -1,4 +1,4 @@
-# KinBench-UQ
+# Beyond the Easy Test: Realistic Benchmarking for Kinase Drug Discovery
 
 Target-aware baseline pipeline for ranking small-molecule ligands against kinase
 targets by predicted binding strength. The repository now runs end to end:

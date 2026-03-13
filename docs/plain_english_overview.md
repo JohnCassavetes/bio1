@@ -1,4 +1,4 @@
-# KinBench-UQ In Plain English
+# Beyond the Easy Test: Realistic Benchmarking for Kinase Drug Discovery
 
 ## What We Are Trying To Do
 

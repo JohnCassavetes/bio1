@@ -12,7 +12,7 @@
 \usepackage{enumitem}
 \graphicspath{{img/}}
 
-\title{KinBench-UQ: Realistic Kinase--Ligand Candidate Prioritization with Exact Literature Baselines and Reproducible Evidence}
+\title{Beyond the Easy Test: Realistic Benchmarking for Kinase Drug Discovery}
 \author{}
 \date{}
 
@@ -351,13 +351,19 @@ in-domain Davis testing, but it is also more realistic. The current generated
 external summary shows:
 
 \begin{itemize}[leftmargin=1.5em]
+  \item \texttt{deepdta\_exact}: RMSE 1.342, mean per-target Spearman 0.361
   \item \texttt{dual\_tower\_uq}: RMSE 1.484, mean per-target Spearman 0.342
+  \item \texttt{graphdta\_gcn\_exact}: RMSE 1.538, mean per-target Spearman 0.138
   \item \texttt{ridge\_ensemble}: RMSE 1.602, mean per-target Spearman 0.155
   \item \texttt{ligand\_only\_ridge}: RMSE 1.641, mean per-target Spearman 0.166
 \end{itemize}
 
 These numbers are worse than the in-domain Davis results, which is expected.
-They are best interpreted as a more honest estimate of transfer difficulty.
+They are best interpreted as a more honest estimate of transfer difficulty. The
+updated external comparison also shows that the literature baselines do not
+simply collapse out of domain: \texttt{deepdta\_exact} is currently the
+strongest model on the external panel, while \texttt{dual\_tower\_uq} remains
+competitive and clearly stronger than the simpler ridge baselines.
 
 \begin{figure}[H]
 \centering
@@ -424,12 +430,11 @@ The most important scientist-facing files are:
 \section{Limitations}
 
 The current manuscript still has limitations. The saved external-validation
-artifacts currently emphasize the repository baselines; extending the same
-external comparison to the literature baselines would strengthen the transfer
-story further. Repeated-seed results and confidence intervals would also
-improve the statistical presentation. Venue-specific formatting, references,
-and a finalized author list are still needed. These are polishing or
-strengthening steps rather than core benchmark blockers.
+artifacts now include the literature baselines as well, but repeated-seed
+results and confidence intervals would still improve the statistical
+presentation. Venue-specific formatting, references, and a finalized author
+list are also still needed. These are polishing or strengthening steps rather
+than core benchmark blockers.
 
 \section{Conclusion}
 
