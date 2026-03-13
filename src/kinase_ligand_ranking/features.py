@@ -135,5 +135,7 @@ def build_feature_components(
         "sequence_feature_count": len(AMINO_ACIDS) + 2,
         "assay_feature_count": len(AFFINITY_TYPES),
         "source_feature_count": len(SOURCES),
+        "affinity_types": list(AFFINITY_TYPES),
+        "source_categories": list(SOURCES),
     }
     return components, metadata

@@ -34,7 +34,6 @@ def generate_split_bundle(
     val_frac: float = 0.15,
     random_seed: int = 42,
     sequence_identity_threshold: float = 0.6,
-    sequence_kmer_size: int = 3,
 ) -> SplitBundle:
     """Generate a train/val/test split bundle for a named strategy."""
     split_type = split_type.lower()
@@ -99,7 +98,6 @@ def generate_split_bundle(
             val_frac=val_frac,
             random_seed=random_seed,
             identity_threshold=sequence_identity_threshold,
-            kmer_size=sequence_kmer_size,
         )
         grouping = "sequence_identity_cluster"
     else:
@@ -288,7 +286,6 @@ def _sequence_identity_assignment(
     val_frac: float,
     random_seed: int,
     identity_threshold: float,
-    kmer_size: int,
 ) -> Tuple[pd.Series, Dict[str, object], Dict[str, pd.DataFrame]]:
     target_rows = (
         df[["target_id", "target_sequence"]]

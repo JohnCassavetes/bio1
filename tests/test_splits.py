@@ -95,7 +95,6 @@ class SplitGenerationTestCase(unittest.TestCase):
             split_type="sequence_identity",
             random_seed=7,
             sequence_identity_threshold=0.5,
-            sequence_kmer_size=2,
         )
         self.assertIn("sequence_identity_cluster_count", bundle.manifest)
         self.assertEqual(bundle.manifest["sequence_identity_metric"], "global_alignment_percent_identity")

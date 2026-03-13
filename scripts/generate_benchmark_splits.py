@@ -48,7 +48,6 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--sequence-identity-threshold", type=float, default=0.6)
-    parser.add_argument("--sequence-kmer-size", type=int, default=3)
     return parser.parse_args()
 
 
@@ -64,7 +63,6 @@ def main() -> None:
             split_type=split_name,
             random_seed=args.seed,
             sequence_identity_threshold=args.sequence_identity_threshold,
-            sequence_kmer_size=args.sequence_kmer_size,
         )
         split_dir = args.output_dir / split_name
         split_dir.mkdir(parents=True, exist_ok=True)

@@ -183,6 +183,8 @@ def main() -> None:
 
     metadata: Dict[str, object] = {
         "feature_metadata": feature_metadata,
+        "default_inference_affinity_type": str(train_val_df["affinity_type"].mode().iloc[0]),
+        "default_inference_source": str(train_val_df["source"].mode().iloc[0]),
         "dataset_summary": {
             "train": dataset_summary(train_df),
             "val": dataset_summary(val_df),

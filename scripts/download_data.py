@@ -43,15 +43,11 @@ KINASE_TARGETS = {
     "AURKA": "O14965",
 }
 
-DAVIS_LIGANDS_URL = (
-    "https://raw.githubusercontent.com/hkmztrk/DeepDTA/master/data/davis/ligands_can.txt"
-)
-DAVIS_PROTEINS_URL = (
-    "https://raw.githubusercontent.com/hkmztrk/DeepDTA/master/data/davis/proteins.txt"
-)
-DAVIS_AFFINITY_URL = (
-    "https://raw.githubusercontent.com/hkmztrk/DeepDTA/master/data/davis/Y"
-)
+DEEPDTA_REPO_REF = "a546a8433a6822e958f36171c4356ad6f414d623"
+DAVIS_BASE_URL = f"https://raw.githubusercontent.com/hkmztrk/DeepDTA/{DEEPDTA_REPO_REF}/data/davis"
+DAVIS_LIGANDS_URL = f"{DAVIS_BASE_URL}/ligands_can.txt"
+DAVIS_PROTEINS_URL = f"{DAVIS_BASE_URL}/proteins.txt"
+DAVIS_AFFINITY_URL = f"{DAVIS_BASE_URL}/Y"
 
 BINDINGDB_API_URL = (
     "https://bindingdb.org/rest/getLigandsByUniprots"
@@ -62,9 +58,27 @@ REQUEST_TIMEOUT_SEC = 30
 MAX_RETRIES = 3
 
 
-def download_davis(output_dir: Path = RAW_DIR) -> Path:
+def _bindingdb_record_count(data: Any) -> int:
+    if isinstance(data, list):
+        return len(data)
+    if isinstance(data, dict):
+        return len(
+            data.get("affinities")
+            or data.get("getLigandsByUniprotsResponse", {}).get("affinities")
+            or data.get("getLindsByUniprotsResponse", {}).get("affinities")
+            or [data]
+        )
+    return 1
+
+
+def download_davis(output_dir: Path = RAW_DIR, *, force: bool = False) -> Path:
     """Download the Davis kinase dataset and flatten it into a CSV."""
     output_dir.mkdir(parents=True, exist_ok=True)
+    filepath = output_dir / "davis_dataset.csv"
+
+    if filepath.exists() and not force:
+        logger.info("Reusing cached Davis dataset at %s", filepath)
+        return filepath
 
     logger.info("Downloading Davis ligands...")
     response = requests.get(DAVIS_LIGANDS_URL, timeout=REQUEST_TIMEOUT_SEC)
@@ -107,7 +121,6 @@ def download_davis(output_dir: Path = RAW_DIR) -> Path:
             )
 
     df = pd.DataFrame(records)
-    filepath = output_dir / "davis_dataset.csv"
     df.to_csv(filepath, index=False)
     logger.info("Davis dataset saved to %s (%d rows)", filepath, len(df))
 
@@ -120,6 +133,7 @@ def download_davis(output_dir: Path = RAW_DIR) -> Path:
         "timestamp": datetime.now().isoformat(),
         "source": "davis",
         "url_base": "https://github.com/hkmztrk/DeepDTA",
+        "ref": DEEPDTA_REPO_REF,
         "num_ligands": len(ligand_ids),
         "num_proteins": len(protein_ids),
         "num_rows": len(df),
@@ -219,9 +233,17 @@ def download_bindingdb(
     targets: Dict[str, str] = KINASE_TARGETS,
     cutoff_nm: int = AFFINITY_CUTOFF_NM,
     output_dir: Path = RAW_DIR,
+    *,
+    force: bool = False,
 ) -> Dict[str, Any]:
     """Download a curated kinase panel from BindingDB."""
     output_dir.mkdir(parents=True, exist_ok=True)
+    metadata_path = output_dir / "bindingdb_target_metadata.json"
+    existing_metadata: Dict[str, Dict[str, Optional[str]]] = {}
+    if metadata_path.exists():
+        with open(metadata_path) as fh:
+            existing_metadata = json.load(fh)
+
     target_metadata: Dict[str, Dict[str, Optional[str]]] = {}
     log: Dict[str, Any] = {
         "timestamp": datetime.now().isoformat(),
@@ -231,6 +253,25 @@ def download_bindingdb(
     }
 
     for target_name, uniprot_id in targets.items():
+        filepath = output_dir / f"bindingdb_{uniprot_id}.json"
+        if filepath.exists() and not force:
+            logger.info("Reusing cached BindingDB data for %s (%s)", target_name, uniprot_id)
+            with open(filepath) as fh:
+                data = json.load(fh)
+            target_metadata[uniprot_id] = {
+                "target_name": target_name,
+                "uniprot_id": uniprot_id,
+                "target_sequence": existing_metadata.get(uniprot_id, {}).get("target_sequence"),
+            }
+            log["targets"][target_name] = {
+                "uniprot_id": uniprot_id,
+                "status": "cached",
+                "file": str(filepath),
+                "ligand_count": _bindingdb_record_count(data),
+                "has_sequence": bool(target_metadata[uniprot_id]["target_sequence"]),
+            }
+            continue
+
         logger.info("Fetching BindingDB data for %s (%s)...", target_name, uniprot_id)
         data = fetch_ligands_for_uniprot(uniprot_id, cutoff_nm=cutoff_nm)
         sequence = fetch_uniprot_sequence(uniprot_id)
@@ -241,21 +282,10 @@ def download_bindingdb(
         }
 
         if data is not None:
-            filepath = output_dir / f"bindingdb_{uniprot_id}.json"
             with open(filepath, "w") as fh:
                 json.dump(data, fh, indent=2)
 
-            if isinstance(data, list):
-                count = len(data)
-            elif isinstance(data, dict):
-                count = len(
-                    data.get("affinities")
-                    or data.get("getLigandsByUniprotsResponse", {}).get("affinities")
-                    or data.get("getLindsByUniprotsResponse", {}).get("affinities")
-                    or [data]
-                )
-            else:
-                count = 1
+            count = _bindingdb_record_count(data)
             log["targets"][target_name] = {
                 "uniprot_id": uniprot_id,
                 "status": "success",
@@ -278,7 +308,7 @@ def download_bindingdb(
 
     with open(output_dir / "download_log.json", "w") as fh:
         json.dump(log, fh, indent=2)
-    with open(output_dir / "bindingdb_target_metadata.json", "w") as fh:
+    with open(metadata_path, "w") as fh:
         json.dump(target_metadata, fh, indent=2)
 
     pd.DataFrame(
@@ -312,6 +342,11 @@ def parse_args() -> argparse.Namespace:
         default=RAW_DIR,
         help=f"Output directory (default: {RAW_DIR})",
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Ignore cached raw files and fetch fresh copies",
+    )
     return parser.parse_args()
 
 
@@ -324,10 +359,10 @@ def main() -> None:
     args = parse_args()
 
     if args.source == "davis":
-        download_davis(output_dir=args.output_dir)
+        download_davis(output_dir=args.output_dir, force=args.force)
         return
 
-    log = download_bindingdb(cutoff_nm=args.cutoff, output_dir=args.output_dir)
+    log = download_bindingdb(cutoff_nm=args.cutoff, output_dir=args.output_dir, force=args.force)
     if all(target["status"] == "failed" for target in log["targets"].values()):
         logger.error(
             "All BindingDB queries failed. Use the Davis dataset instead:\n"
